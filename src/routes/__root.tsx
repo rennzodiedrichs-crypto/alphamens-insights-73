@@ -32,6 +32,12 @@ export const Route = createRootRoute({
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "AlphaMens Premium — Dashboard" },
       { name: "description", content: "Painel de leads, atendimentos e agendamentos da AlphaMens Premium." },
+      { property: "og:title", content: "AlphaMens Premium — Dashboard" },
+      { name: "twitter:title", content: "AlphaMens Premium — Dashboard" },
+      { property: "og:description", content: "Painel de leads, atendimentos e agendamentos da AlphaMens Premium." },
+      { name: "twitter:description", content: "Painel de leads, atendimentos e agendamentos da AlphaMens Premium." },
+      { name: "twitter:card", content: "summary" },
+      { property: "og:type", content: "website" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
