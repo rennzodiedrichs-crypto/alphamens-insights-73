@@ -1,6 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 
 export type Lead = {
+  id: string;
   identificador_usuario: string;
   inicio_atendimento_em: string | null;
   inicio_fora_horario_comercial: boolean | null;
@@ -22,15 +24,35 @@ export type Lead = {
 };
 
 export async function fetchLeadsInRange(from: Date, to: Date): Promise<Lead[]> {
+  // Usamos formatação local para evitar o deslocamento de UTC (Z) que o toISOString causa.
+  // Isso garante que leads criados às 00:01 do horário local sejam capturados corretamente.
+  const fromStr = format(from, "yyyy-MM-dd'T'HH:mm:ss");
+  const toStr = format(to, "yyyy-MM-dd'T'HH:mm:ss");
+
   const { data, error } = await supabase
     .from("CRM_ALPHA")
     .select("*")
-    .gte("inicio_atendimento_em", from.toISOString())
-    .lte("inicio_atendimento_em", to.toISOString())
-    .order("inicio_atendimento_em", { ascending: false })
+    .or(`inicio_atendimento_em.gte.${fromStr},timestamp_ultima_msg.gte.${fromStr}`)
+    .order("inicio_atendimento_em", { ascending: false, nullsFirst: false })
     .limit(1000);
-  if (error) throw error;
-  return (data ?? []) as Lead[];
+
+  // Filtragem secundária no JS para garantir que o limite superior (toStr) seja respeitado
+  // (O 'or' complexo com gte/lte em duas colunas é melhor filtrado no retorno para evitar erros de sintaxe no Postgrest)
+  const filteredData = (data ?? []).filter(lead => {
+    const start = lead.inicio_atendimento_em;
+    const lastMsg = lead.timestamp_ultima_msg;
+    
+    const isStartInRange = start && start >= fromStr && start <= toStr;
+    const isLastMsgInRange = lastMsg && lastMsg >= fromStr && lastMsg <= toStr;
+    
+    return isStartInRange || isLastMsgInRange;
+  });
+
+  if (error) {
+    console.error("Supabase Error:", error);
+    throw error;
+  }
+  return filteredData as Lead[];
 }
 
 export async function fetchLeadsByBarber(barbeiro: string): Promise<Lead[]> {

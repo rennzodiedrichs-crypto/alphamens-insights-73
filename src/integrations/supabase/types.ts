@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           barbeiro: string | null
           data_hora_agendada: string | null
+          id: string
           id_agendamento: string | null
           id_conta_chatwoot: string | null
           id_conversa_chatwoot: string | null

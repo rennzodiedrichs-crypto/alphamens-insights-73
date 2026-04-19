@@ -9,10 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeadsRouteImport } from './routes/leads'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AgendaBarbeiroRouteImport } from './routes/agenda.$barbeiro'
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LeadsRoute = LeadsRouteImport.update({
   id: '/leads',
   path: '/leads',
@@ -32,35 +38,46 @@ const AgendaBarbeiroRoute = AgendaBarbeiroRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/leads': typeof LeadsRoute
+  '/login': typeof LoginRoute
   '/agenda/$barbeiro': typeof AgendaBarbeiroRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/leads': typeof LeadsRoute
+  '/login': typeof LoginRoute
   '/agenda/$barbeiro': typeof AgendaBarbeiroRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/leads': typeof LeadsRoute
+  '/login': typeof LoginRoute
   '/agenda/$barbeiro': typeof AgendaBarbeiroRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/leads' | '/agenda/$barbeiro'
+  fullPaths: '/' | '/leads' | '/login' | '/agenda/$barbeiro'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/leads' | '/agenda/$barbeiro'
-  id: '__root__' | '/' | '/leads' | '/agenda/$barbeiro'
+  to: '/' | '/leads' | '/login' | '/agenda/$barbeiro'
+  id: '__root__' | '/' | '/leads' | '/login' | '/agenda/$barbeiro'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LeadsRoute: typeof LeadsRoute
+  LoginRoute: typeof LoginRoute
   AgendaBarbeiroRoute: typeof AgendaBarbeiroRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/leads': {
       id: '/leads'
       path: '/leads'
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LeadsRoute: LeadsRoute,
+  LoginRoute: LoginRoute,
   AgendaBarbeiroRoute: AgendaBarbeiroRoute,
 }
 export const routeTree = rootRouteImport

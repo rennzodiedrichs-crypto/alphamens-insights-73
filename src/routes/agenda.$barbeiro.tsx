@@ -58,6 +58,11 @@ function AgendaPage() {
   useEffect(() => {
     let active = true;
     setLoading(true);
+    
+    // Reset local states when barber changes to ensure isolation
+    setSelectedDay(null);
+    setMonthRef(new Date());
+
     fetchLeadsByBarber(barbeiroNome)
       .then((d) => active && setLeads(d))
       .finally(() => active && setLoading(false));

@@ -91,24 +91,24 @@ function HomePage() {
       else dentro++;
     });
     return [
-      { name: "Horário comercial", value: dentro, color: "oklch(0.72 0.18 48)" },
-      { name: "Fora do horário", value: fora, color: "oklch(0.55 0.1 60)" },
+      { name: "Horário comercial", value: dentro, color: "oklch(0.65 0.15 45)" }, // Laranja forte
+      { name: "Fora do horário", value: fora, color: "oklch(0.45 0.05 45)" }, // Tom mais escuro e sóbrio
     ];
   }, [leads]);
 
   return (
-    <div className="px-6 py-8 md:px-10 md:py-10 max-w-[1600px] mx-auto">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div className="px-6 py-8 md:px-10 md:py-10 max-w-[1600px] mx-auto overflow-hidden">
+      <header className="mb-10 flex flex-wrap items-end justify-between gap-4 animate-reveal">
         <div>
-          <div className="text-xs uppercase tracking-[0.3em] text-primary mb-2">Dashboard</div>
-          <h1 className="font-display text-4xl md:text-5xl text-foreground">Visão Geral</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Acompanhe leads, atendimentos e agendamentos em tempo real.
+          <div className="text-[10px] uppercase tracking-[0.4em] text-primary mb-3 font-bold opacity-80">Dashboard Intuitivo</div>
+          <h1 className="font-display text-5xl md:text-6xl text-foreground tracking-tight leading-none">Visão Geral</h1>
+          <p className="text-muted-foreground mt-3 text-base max-w-lg leading-relaxed">
+            Gestão estratégica de leads, atendimentos e agendamentos com métricas em tempo real.
           </p>
         </div>
       </header>
 
-      <div className="mb-8 rounded-xl border border-border/60 bg-card/40 p-4">
+      <div className="mb-10 rounded-xl border border-border/40 bg-card/20 p-4 backdrop-blur-sm animate-reveal [animation-delay:100ms]">
         <DateRangeFilter value={range} onChange={setRange} />
       </div>
 
@@ -118,65 +118,98 @@ function HomePage() {
         </div>
       )}
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-        <StatCard label="Total de leads" value={loading ? "…" : stats.total} icon={Users} accent="primary" />
-        <StatCard label="Agendamentos" value={loading ? "…" : stats.agendados} icon={CalendarCheck} accent="success" />
-        <StatCard label="Valor agendado" value={loading ? "…" : formatBRL(stats.valorTotal)} icon={DollarSign} accent="primary" />
-        <StatCard label="Sem agendamento" value={loading ? "…" : stats.semAgenda} icon={CalendarX} accent="muted" />
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-12">
+        <div className="animate-reveal [animation-delay:150ms]">
+          <StatCard label="Total de leads" value={loading ? "…" : stats.total} icon={Users} accent="primary" />
+        </div>
+        <div className="animate-reveal [animation-delay:200ms]">
+          <StatCard label="Agendamentos" value={loading ? "…" : stats.agendados} icon={CalendarCheck} accent="success" />
+        </div>
+        <div className="animate-reveal [animation-delay:250ms]">
+          <StatCard label="Valor agendado" value={loading ? "…" : formatBRL(stats.valorTotal)} icon={DollarSign} accent="primary" />
+        </div>
+        <div className="animate-reveal [animation-delay:300ms]">
+          <StatCard label="Sem agendamento" value={loading ? "…" : stats.semAgenda} icon={CalendarX} accent="muted" />
+        </div>
       </section>
 
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <div className="lg:col-span-2 rounded-xl border border-border/60 bg-gradient-card p-6 shadow-card">
-          <div className="flex items-center justify-between mb-4">
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 glass-panel p-7 rounded-2xl shadow-card animate-reveal [animation-delay:400ms]">
+          <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="font-display text-2xl text-foreground flex items-center gap-2">
-                <TrendingUp size={20} className="text-primary" />
+              <h2 className="font-display text-3xl text-foreground flex items-center gap-3 tracking-tight">
+                <TrendingUp size={24} className="text-primary" />
                 Leads por dia
               </h2>
-              <p className="text-xs text-muted-foreground mt-1">
-                Baseado em início do atendimento
+              <p className="text-xs text-muted-foreground mt-1 uppercase tracking-widest font-semibold opacity-60">
+                Frequência de novos atendimentos
               </p>
             </div>
           </div>
-          <div className="h-72">
+          <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={dailyData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0.014 60)" />
-                <XAxis dataKey="date" stroke="oklch(0.7 0.015 70)" fontSize={11} />
-                <YAxis stroke="oklch(0.7 0.015 70)" fontSize={11} allowDecimals={false} />
+            <LineChart data={dailyData} margin={{ top: 20, right: 30, left: -10, bottom: 10 }}>
+                <defs>
+                  <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0.014 60 / 0.3)" vertical={false} />
+                <XAxis 
+                  dataKey="date" 
+                  stroke="oklch(0.7 0.015 70 / 0.5)" 
+                  fontSize={10} 
+                  tickLine={false} 
+                  axisLine={false} 
+                  dy={10}
+                />
+                <YAxis 
+                  stroke="oklch(0.7 0.015 70 / 0.5)" 
+                  fontSize={10} 
+                  tickLine={false} 
+                  axisLine={false} 
+                  allowDecimals={false}
+                  domain={[0, 'auto']}
+                />
                 <Tooltip
                   contentStyle={{
-                    background: "oklch(0.21 0.014 60)",
+                    background: "oklch(0.18 0.012 60 / 0.95)",
+                    backdropFilter: "blur(8px)",
                     border: "1px solid oklch(0.3 0.014 60)",
-                    borderRadius: 8,
-                    color: "oklch(0.96 0.01 80)",
+                    borderRadius: 12,
+                    boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.5)",
+                    padding: "12px",
                   }}
-                  cursor={{ stroke: "oklch(0.72 0.18 48)", strokeWidth: 1 }}
+                  itemStyle={{ color: "var(--color-primary)", fontSize: "12px", fontWeight: "bold" }}
+                  labelStyle={{ color: "white", fontSize: "14px", marginBottom: "4px", fontWeight: "bold" }}
+                  cursor={{ stroke: "var(--color-primary)", strokeWidth: 1, strokeDasharray: "4 4" }}
                 />
                 <Line
                   type="monotone"
                   dataKey="leads"
-                  stroke="oklch(0.72 0.18 48)"
-                  strokeWidth={2.5}
-                  dot={{ fill: "oklch(0.72 0.18 48)", r: 3 }}
-                  activeDot={{ r: 6 }}
+                  stroke="var(--color-primary)"
+                  strokeWidth={3}
+                  dot={{ fill: "var(--color-primary)", r: 4, strokeWidth: 2, stroke: "var(--color-background)" }}
+                  activeDot={{ r: 7, strokeWidth: 0, fill: "var(--color-primary)" }}
+                  animationDuration={1500}
                 />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="rounded-xl border border-border/60 bg-gradient-card p-6 shadow-card">
-          <div className="mb-4">
-            <h2 className="font-display text-2xl text-foreground flex items-center gap-2">
-              <Clock size={20} className="text-primary" />
-              Atendimento 24h
+        <div className="glass-panel p-7 rounded-2xl shadow-card animate-reveal [animation-delay:500ms]">
+          <div className="mb-6">
+            <h2 className="font-display text-3xl text-foreground flex items-center gap-3 tracking-tight">
+              <Clock size={24} className="text-primary" />
+              Ciclo 24h
             </h2>
-            <p className="text-xs text-muted-foreground mt-1">
-              Eficácia do bot fora do horário
+            <p className="text-xs text-muted-foreground mt-1 uppercase tracking-widest font-semibold opacity-60">
+              Conversão fora do horário
             </p>
           </div>
-          <div className="h-72">
+          <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -185,26 +218,42 @@ function HomePage() {
                   nameKey="name"
                   cx="50%"
                   cy="45%"
-                  innerRadius={50}
-                  outerRadius={85}
-                  paddingAngle={3}
+                  innerRadius={70}
+                  outerRadius={100}
+                  paddingAngle={8}
+                  animationBegin={500}
+                  animationDuration={1200}
+                  stroke="none"
                 >
-                  {horaData.map((entry) => (
-                    <Cell key={entry.name} fill={entry.color} stroke="oklch(0.16 0.012 60)" strokeWidth={2} />
+                  {horaData.map((entry, index) => (
+                    <Cell 
+                      key={entry.name} 
+                      fill={entry.color} 
+                      className="hover:brightness-125 transition-all cursor-pointer focus:outline-none"
+                    />
                   ))}
                 </Pie>
                 <Tooltip
-                  contentStyle={{
-                    background: "oklch(0.21 0.014 60)",
-                    border: "1px solid oklch(0.3 0.014 60)",
-                    borderRadius: 8,
-                    color: "oklch(0.96 0.01 80)",
+                  formatter={(value: number) => {
+                    const total = horaData.reduce((acc, curr) => acc + curr.value, 0);
+                    const percent = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                    return [`${value} leads (${percent}%)`, ""];
                   }}
+                  contentStyle={{
+                    background: "oklch(0.18 0.012 60 / 0.95)",
+                    backdropFilter: "blur(8px)",
+                    border: "1px solid oklch(0.3 0.014 60)",
+                    borderRadius: 12,
+                    padding: "10px",
+                    boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.5)",
+                  }}
+                  itemStyle={{ fontSize: "12px", fontWeight: "bold", color: "white" }}
                 />
                 <Legend
                   verticalAlign="bottom"
                   iconType="circle"
-                  wrapperStyle={{ fontSize: 11, color: "oklch(0.7 0.015 70)" }}
+                  iconSize={8}
+                  wrapperStyle={{ fontSize: 11, fontWeight: "500", paddingTop: "20px" }}
                 />
               </PieChart>
             </ResponsiveContainer>

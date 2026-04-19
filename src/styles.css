@@ -45,6 +45,22 @@
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --font-display: "Bebas Neue", "Oswald", sans-serif;
+
+  --animate-reveal-up: reveal-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  --animate-stagger-1: reveal-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s forwards;
+  --animate-stagger-2: reveal-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s forwards;
+  --animate-stagger-3: reveal-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) 0.3s forwards;
+
+  @keyframes reveal-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }
 
 /* AlphaMens Premium — Dark + Orange identity */
@@ -97,7 +113,9 @@
   --gradient-primary: linear-gradient(135deg, oklch(0.72 0.18 48), oklch(0.6 0.2 35));
   --gradient-card: linear-gradient(145deg, oklch(0.22 0.014 60), oklch(0.18 0.012 60));
   --shadow-glow: 0 0 40px -10px oklch(0.72 0.18 48 / 0.4);
-  --shadow-card: 0 8px 24px -8px oklch(0 0 0 / 0.5);
+  --shadow-card: 0 8px 32px -8px oklch(0 0 0 / 0.6);
+  --glass-border: 1px solid oklch(1 1 1 / 0.08);
+  --glass-reflection: linear-gradient(135deg, oklch(1 1 1 / 0.05) 0%, oklch(1 1 1 / 0) 100%);
 }
 
 .dark {
@@ -146,5 +164,30 @@
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+  }
+  .glass-panel {
+    background: var(--gradient-card);
+    backdrop-filter: blur(12px);
+    border: var(--glass-border);
+    position: relative;
+  }
+  .glass-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--glass-reflection);
+    pointer-events: none;
+  }
+  .animate-reveal {
+    opacity: 0;
+    animation: var(--animate-reveal-up);
+  }
+  .hover-lift {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-card), var(--shadow-glow);
   }
 }
