@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Home, Users, Scissors, LogOut } from "lucide-react";
+import { Home, Users, Scissors, LogOut, BarChart } from "lucide-react";
 import logo from "@/assets/alpha-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -22,7 +22,7 @@ type SidebarContentProps = {
 export function SidebarContent({ onItemClick, hideHeader = false }: SidebarContentProps) {
   const { location } = useRouterState();
   const path = location.pathname;
-  const { signOut } = useAuth();
+  const { signOut, role, barberName } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -56,6 +56,8 @@ export function SidebarContent({ onItemClick, hideHeader = false }: SidebarConte
     </Link>
   );
 
+  const isAdmin = role === "admin";
+
   return (
     <div className="flex flex-col h-full bg-sidebar/95 backdrop-blur-xl">
       {!hideHeader && (
@@ -74,17 +76,22 @@ export function SidebarContent({ onItemClick, hideHeader = false }: SidebarConte
       )}
 
       <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-1.5 custom-scrollbar">
-        <div className="px-3 pb-3 text-[10px] uppercase tracking-[0.2em] text-sidebar-foreground/30 font-bold">
-          Geral
-        </div>
-        {navItem("/", path === "/", <Home size={18} />, "Página Inicial")}
-        {navItem("/leads", path === "/leads", <Users size={18} />, "Lista de Leads")}
+        {isAdmin && (
+          <>
+            <div className="px-3 pb-3 text-[10px] uppercase tracking-[0.4em] text-sidebar-foreground/30 font-bold">
+              Geral
+            </div>
+            {navItem("/", path === "/", <Home size={18} />, "Página Inicial")}
+            {navItem("/leads", path === "/leads", <Users size={18} />, "Lista de Leads")}
+            {navItem("/equipe", path === "/equipe", <BarChart size={18} />, "Gestão de Equipe")}
+          </>
+        )}
 
-        <div className="px-3 pt-6 pb-3 text-[10px] uppercase tracking-[0.2em] text-sidebar-foreground/30 font-bold">
+        <div className="px-3 pt-6 pb-3 text-[10px] uppercase tracking-[0.4em] text-sidebar-foreground/30 font-bold">
           Agendas
         </div>
         <div className="space-y-1">
-          {BARBERS.map((b) => {
+          {BARBERS.filter((b) => isAdmin || b === barberName).map((b) => {
             const to = `/agenda/${slugify(b)}`;
             return navItem(to, path === to, <Scissors size={16} />, b);
           })}
@@ -92,6 +99,13 @@ export function SidebarContent({ onItemClick, hideHeader = false }: SidebarConte
       </nav>
 
       <div className="p-4 border-t border-sidebar-border/50 flex flex-col gap-4">
+        {role && (
+          <div className="px-3 py-2 rounded-lg bg-sidebar-accent/30 border border-sidebar-border/30">
+            <div className="text-[9px] uppercase tracking-[0.2em] text-primary font-bold">Usuário Logado</div>
+            <div className="text-xs font-medium text-sidebar-foreground truncate mt-0.5">{barberName}</div>
+            <div className="text-[9px] text-sidebar-foreground/40 font-bold uppercase tracking-widest mt-0.5">{role}</div>
+          </div>
+        )}
         <button
           onClick={handleSignOut}
           className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-destructive/70 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all"

@@ -1,4 +1,4 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   startOfMonth,
@@ -21,12 +21,19 @@ import {
   DollarSign,
   Clock,
   Scissors,
+  CalendarX,
+  Plus,
 } from "lucide-react";
 import { fetchLeadsByBarber, type Lead } from "@/lib/leads";
 import { BARBER_LIST, barberSlug } from "@/components/AppSidebar";
 import { StatCard } from "@/components/StatCard";
 import { formatBRL, formatTimeBR } from "@/lib/format";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { criarAusencia, fetchProfissionais } from "@/lib/equipe";
 
 export const Route = createFileRoute("/agenda/$barbeiro")({
   beforeLoad: ({ params }) => {
@@ -49,11 +56,55 @@ export const Route = createFileRoute("/agenda/$barbeiro")({
 function AgendaPage() {
   const { barbeiro } = Route.useParams();
   const barbeiroNome = BARBER_LIST.find((b) => barberSlug(b) === barbeiro)!;
+  const { role, barberName, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
 
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [monthRef, setMonthRef] = useState(() => new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+
+  const [openModal, setOpenModal] = useState(false);
+  const [newInicio, setNewInicio] = useState("");
+  const [newFim, setNewFim] = useState("");
+  const [newMotivo, setNewMotivo] = useState("");
+  const [profissionalId, setProfissionalId] = useState<string>("");
+
+  useEffect(() => {
+    fetchProfissionais().then(profs => {
+      const me = profs.find(p => p.nome === barbeiroNome);
+      if (me) setProfissionalId(me.id);
+    });
+  }, [barbeiroNome]);
+
+  const handleCreateAusencia = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profissionalId) {
+      alert("Erro: ID do profissional não encontrado.");
+      return;
+    }
+    try {
+      const startIso = new Date(newInicio).toISOString();
+      const endIso = new Date(newFim).toISOString();
+      await criarAusencia(profissionalId, startIso, endIso, newMotivo);
+      setOpenModal(false);
+      setNewInicio("");
+      setNewFim("");
+      setNewMotivo("");
+      alert("Bloqueio registrado com sucesso!");
+    } catch (error) {
+      alert("Erro ao criar ausência. Verifique as datas.");
+    }
+  };
+
+  useEffect(() => {
+    if (!authLoading && role === "barber" && barberName) {
+      const mySlug = barberSlug(barberName);
+      if (barbeiro !== mySlug) {
+        navigate({ to: `/agenda/${mySlug}` });
+      }
+    }
+  }, [authLoading, role, barberName, barbeiro, navigate]);
 
   useEffect(() => {
     let active = true;
@@ -136,6 +187,58 @@ function AgendaPage() {
           <h1 className="font-display text-4xl md:text-5xl text-foreground">{barbeiroNome}</h1>
           <p className="text-muted-foreground mt-1 text-sm">Agenda mensal de atendimentos.</p>
         </div>
+        
+        {/* Modal de Bloqueio de Agenda */}
+        <Dialog open={openModal} onOpenChange={setOpenModal}>
+          <DialogTrigger asChild>
+            <Button className="gap-2">
+              <CalendarX size={16} /> Bloquear Agenda
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px] bg-sidebar border-sidebar-border text-sidebar-foreground">
+            <DialogHeader>
+              <DialogTitle className="font-display">Bloquear Horário</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleCreateAusencia} className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="inicio">Início</Label>
+                  <Input 
+                    id="inicio" 
+                    type="datetime-local" 
+                    required 
+                    value={newInicio} 
+                    onChange={e => setNewInicio(e.target.value)}
+                    className="bg-background border-sidebar-border"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="fim">Fim</Label>
+                  <Input 
+                    id="fim" 
+                    type="datetime-local" 
+                    required 
+                    value={newFim} 
+                    onChange={e => setNewFim(e.target.value)}
+                    className="bg-background border-sidebar-border"
+                  />
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="motivo">Motivo</Label>
+                <Input 
+                  id="motivo" 
+                  placeholder="Ex: Almoço, Folga, Médico" 
+                  required 
+                  value={newMotivo} 
+                  onChange={e => setNewMotivo(e.target.value)}
+                  className="bg-background border-sidebar-border"
+                />
+              </div>
+              <Button type="submit" className="mt-2 w-full">Salvar Bloqueio</Button>
+            </form>
+          </DialogContent>
+        </Dialog>
       </header>
 
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">

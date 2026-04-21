@@ -11,10 +11,10 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function debug() {
-  console.log("Checking CRM_ALPHA...");
+  console.log("Checking leads...");
   const { data, error } = await supabase
-    .from("CRM_ALPHA")
-    .select("identificador_usuario, inicio_atendimento_em, barbeiro")
+    .from("leads")
+    .select("*")
     .limit(5);
 
   if (error) {

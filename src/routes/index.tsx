@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Users,
@@ -29,6 +29,8 @@ import { StatCard } from "@/components/StatCard";
 import { fetchLeadsInRange, type Lead } from "@/lib/leads";
 import { getPresetRange, type DateRange } from "@/lib/date-range";
 import { formatBRL } from "@/lib/format";
+import { useAuth } from "@/hooks/useAuth";
+import { barberSlug } from "@/components/AppSidebar";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -41,12 +43,19 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
+  const { role, barberName, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [range, setRange] = useState<DateRange>(() => getPresetRange("last7"));
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!authLoading && role === "barber" && barberName) {
+      navigate({ to: `/agenda/${barberSlug(barberName)}` });
+      return;
+    }
+
     let active = true;
     setLoading(true);
     setError(null);

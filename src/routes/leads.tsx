@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { CalendarCheck, MoonStar, MessageSquare, Phone, Scissors, X, Users } from "lucide-react";
 import { DateRangeFilter } from "@/components/DateRangeFilter";
@@ -7,6 +7,8 @@ import { getPresetRange, type DateRange } from "@/lib/date-range";
 import { formatBRL, formatDateTimeBR, formatPhone } from "@/lib/format";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
+import { barberSlug } from "@/components/AppSidebar";
 
 export const Route = createFileRoute("/leads")({
   head: () => ({
@@ -19,10 +21,19 @@ export const Route = createFileRoute("/leads")({
 });
 
 function LeadsPage() {
+  const { role, barberName, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [range, setRange] = useState<DateRange>(() => getPresetRange("today"));
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Lead | null>(null);
+
+  useEffect(() => {
+    if (!authLoading && role === "barber" && barberName) {
+      navigate({ to: `/agenda/${barberSlug(barberName)}` });
+      return;
+    }
+  }, [authLoading, role, barberName, navigate]);
 
   useEffect(() => {
     let active = true;

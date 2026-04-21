@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeadsRouteImport } from './routes/leads'
+import { Route as EquipeRouteImport } from './routes/equipe'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AgendaBarbeiroRouteImport } from './routes/agenda.$barbeiro'
 
@@ -22,6 +23,11 @@ const LoginRoute = LoginRouteImport.update({
 const LeadsRoute = LeadsRouteImport.update({
   id: '/leads',
   path: '/leads',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EquipeRoute = EquipeRouteImport.update({
+  id: '/equipe',
+  path: '/equipe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -37,12 +43,14 @@ const AgendaBarbeiroRoute = AgendaBarbeiroRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/equipe': typeof EquipeRoute
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
   '/agenda/$barbeiro': typeof AgendaBarbeiroRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/equipe': typeof EquipeRoute
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
   '/agenda/$barbeiro': typeof AgendaBarbeiroRoute
@@ -50,20 +58,22 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/equipe': typeof EquipeRoute
   '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
   '/agenda/$barbeiro': typeof AgendaBarbeiroRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/leads' | '/login' | '/agenda/$barbeiro'
+  fullPaths: '/' | '/equipe' | '/leads' | '/login' | '/agenda/$barbeiro'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/leads' | '/login' | '/agenda/$barbeiro'
-  id: '__root__' | '/' | '/leads' | '/login' | '/agenda/$barbeiro'
+  to: '/' | '/equipe' | '/leads' | '/login' | '/agenda/$barbeiro'
+  id: '__root__' | '/' | '/equipe' | '/leads' | '/login' | '/agenda/$barbeiro'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  EquipeRoute: typeof EquipeRoute
   LeadsRoute: typeof LeadsRoute
   LoginRoute: typeof LoginRoute
   AgendaBarbeiroRoute: typeof AgendaBarbeiroRoute
@@ -85,6 +95,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LeadsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/equipe': {
+      id: '/equipe'
+      path: '/equipe'
+      fullPath: '/equipe'
+      preLoaderRoute: typeof EquipeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -104,6 +121,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  EquipeRoute: EquipeRoute,
   LeadsRoute: LeadsRoute,
   LoginRoute: LoginRoute,
   AgendaBarbeiroRoute: AgendaBarbeiroRoute,
