@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchPerformanceMensal, PerformanceBarbeiro, fetchAusenciasFuturas, EscalaAusencia, criarAusencia, deletarAusencia, fetchProfissionais } from "@/lib/equipe";
+import { fetchPerformanceMensal, PerformanceBarbeiro, fetchAusenciasFuturas, EscalaAusencia, criarAusencia, deletarAusencia, fetchProfissionais, createProfissional, deleteProfissional } from "@/lib/equipe";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Users, DollarSign, CalendarX, Plus, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/equipe")({
   component: EquipeAdminPage,
@@ -119,6 +120,84 @@ function EquipeAdminPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-7">
+        {/* Gestão de Profissionais */}
+        <Card className="col-span-full bg-sidebar-accent/5 border-primary/10">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="font-display">Equipe AlphaMens</CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">Gerencie os profissionais que aparecem no sistema.</p>
+            </div>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button size="sm" className="gap-2 shadow-glow">
+                  <Plus className="h-4 w-4" /> Novo Profissional
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[400px] bg-sidebar border-sidebar-border text-sidebar-foreground">
+                <DialogHeader>
+                  <DialogTitle className="font-display">Cadastrar Profissional</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  const target = e.target as any;
+                  const nome = target.nome.value;
+                  try {
+                    await createProfissional(nome);
+                    loadData();
+                    target.reset();
+                    toast.success("Profissional cadastrado!");
+                  } catch (err) {
+                    toast.error("Erro ao cadastrar profissional");
+                  }
+                }} className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="nome">Nome do Barbeiro</Label>
+                    <Input id="nome" name="nome" placeholder="Ex: Lucas Silva" required className="bg-background border-sidebar-border" />
+                  </div>
+                  <Button type="submit" className="w-full">Salvar</Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {profissionais.map((p) => (
+                <div key={p.id} className="relative group p-4 rounded-xl border border-sidebar-border bg-sidebar-accent/10 hover:border-primary/40 transition-all flex flex-col items-center text-center gap-3">
+                  <Avatar className="h-12 w-12 ring-2 ring-primary/20">
+                    <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                      {p.nome.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="font-medium text-sm truncate w-full">{p.nome}</div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute -top-2 -right-2 h-7 w-7 rounded-full bg-destructive/10 text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={async () => {
+                      if (confirm(`Excluir profissional ${p.nome}?`)) {
+                        try {
+                          await deleteProfissional(p.id);
+                          loadData();
+                          toast.success("Profissional removido");
+                        } catch (err) {
+                          toast.error("Não é possível excluir: ele possui agendamentos.");
+                        }
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+              {profissionais.length === 0 && (
+                <div className="col-span-full py-10 text-center text-muted-foreground italic border border-dashed border-sidebar-border rounded-xl">
+                  Nenhum profissional cadastrado ainda.
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Performance Table */}
         <Card className="col-span-4 bg-sidebar-accent/10 border-sidebar-border">
           <CardHeader>

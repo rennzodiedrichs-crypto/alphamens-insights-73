@@ -87,9 +87,56 @@ export async function deletarAusencia(id: string): Promise<void> {
 export async function fetchProfissionais() {
   const { data, error } = await supabase
     .from("profissionais")
-    .select("id, nome")
+    .select("*")
     .order("nome");
     
   if (error) throw error;
   return data || [];
 }
+
+export async function createProfissional(nome: string) {
+  const { data, error } = await supabase
+    .from("profissionais")
+    .insert({ nome })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function updateProfissional(id: string, nome: string) {
+  const { data, error } = await supabase
+    .from("profissionais")
+    .update({ nome })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteProfissional(id: string) {
+  const { error } = await supabase
+    .from("profissionais")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw error;
+}
+
+export async function fetchProfissionalBySlug(slug: string) {
+  const { data: profs, error } = await supabase
+    .from("profissionais")
+    .select("*");
+  
+  if (error) throw error;
+  
+  const slugify = (s: string) =>
+    s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "-");
+
+  return profs.find(p => slugify(p.nome) === slug) || null;
+}
+
+

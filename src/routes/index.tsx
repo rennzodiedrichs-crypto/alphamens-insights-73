@@ -112,7 +112,7 @@ function HomePage() {
           <div className="text-[10px] uppercase tracking-[0.4em] text-primary mb-3 font-bold opacity-80">Dashboard Intuitivo</div>
           <h1 className="font-display text-5xl md:text-6xl text-foreground tracking-tight leading-none">Visão Geral</h1>
           <p className="text-muted-foreground mt-3 text-base max-w-lg leading-relaxed">
-            Gestão estratégica de leads, atendimentos e agendamentos com métricas em tempo real.
+            Gestão estratégica de clientes, atendimentos e agendamentos com métricas em tempo real.
           </p>
         </div>
       </header>
@@ -129,7 +129,7 @@ function HomePage() {
 
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-12">
         <div className="animate-reveal [animation-delay:150ms]">
-          <StatCard label="Total de leads" value={loading ? "…" : stats.total} icon={Users} accent="primary" />
+          <StatCard label="Total de clientes" value={loading ? "…" : stats.total} icon={Users} accent="primary" />
         </div>
         <div className="animate-reveal [animation-delay:200ms]">
           <StatCard label="Agendamentos" value={loading ? "…" : stats.agendados} icon={CalendarCheck} accent="success" />
@@ -148,7 +148,7 @@ function HomePage() {
             <div>
               <h2 className="font-display text-3xl text-foreground flex items-center gap-3 tracking-tight">
                 <TrendingUp size={24} className="text-primary" />
-                Leads por dia
+                Clientes por dia
               </h2>
               <p className="text-xs text-muted-foreground mt-1 uppercase tracking-widest font-semibold opacity-60">
                 Frequência de novos atendimentos

@@ -25,7 +25,6 @@ import {
   Plus,
 } from "lucide-react";
 import { fetchLeadsByBarber, type Lead } from "@/lib/leads";
-import { BARBER_LIST, barberSlug } from "@/components/AppSidebar";
 import { StatCard } from "@/components/StatCard";
 import { formatBRL, formatTimeBR } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -33,20 +32,21 @@ import { useAuth } from "@/hooks/useAuth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { criarAusencia, fetchProfissionais } from "@/lib/equipe";
+import { criarAusencia, fetchProfissionais, fetchProfissionalBySlug } from "@/lib/equipe";
+import { ManualAppointmentModal } from "@/components/ManualAppointmentModal";
 
 export const Route = createFileRoute("/agenda/$barbeiro")({
-  beforeLoad: ({ params }) => {
-    const match = BARBER_LIST.find((b) => barberSlug(b) === params.barbeiro);
+  loader: async ({ params }) => {
+    const match = await fetchProfissionalBySlug(params.barbeiro);
     if (!match) throw notFound();
-    return { barbeiroNome: match };
+    return { barbeiroNome: match.nome };
   },
-  head: ({ params }) => {
-    const match = BARBER_LIST.find((b) => barberSlug(b) === params.barbeiro);
+  head: ({ loaderData }) => {
+    const nome = (loaderData as any)?.barbeiroNome;
     return {
       meta: [
-        { title: `Agenda ${match ?? ""} — AlphaMens Premium` },
-        { name: "description", content: `Agenda mensal do barbeiro ${match ?? ""}.` },
+        { title: `Agenda ${nome ?? ""} — AlphaMens Premium` },
+        { name: "description", content: `Agenda mensal do barbeiro ${nome ?? ""}.` },
       ],
     };
   },
@@ -54,8 +54,8 @@ export const Route = createFileRoute("/agenda/$barbeiro")({
 });
 
 function AgendaPage() {
+  const { barbeiroNome } = Route.useLoaderData() as { barbeiroNome: string };
   const { barbeiro } = Route.useParams();
-  const barbeiroNome = BARBER_LIST.find((b) => barberSlug(b) === barbeiro)!;
   const { role, barberName, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -68,7 +68,8 @@ function AgendaPage() {
   const [newInicio, setNewInicio] = useState("");
   const [newFim, setNewFim] = useState("");
   const [newMotivo, setNewMotivo] = useState("");
-  const [profissionalId, setProfissionalId] = useState<string>("");
+   const [profissionalId, setProfissionalId] = useState<string>("");
+  const [isManualOpen, setIsManualOpen] = useState(false);
 
   useEffect(() => {
     fetchProfissionais().then(profs => {
@@ -105,21 +106,17 @@ function AgendaPage() {
       }
     }
   }, [authLoading, role, barberName, barbeiro, navigate]);
+  const refreshData = () => {
+    setLoading(true);
+    fetchLeadsByBarber(barbeiroNome)
+      .then((d) => setLeads(d))
+      .finally(() => setLoading(false));
+  };
 
   useEffect(() => {
-    let active = true;
-    setLoading(true);
-    
-    // Reset local states when barber changes to ensure isolation
     setSelectedDay(null);
     setMonthRef(new Date());
-
-    fetchLeadsByBarber(barbeiroNome)
-      .then((d) => active && setLeads(d))
-      .finally(() => active && setLoading(false));
-    return () => {
-      active = false;
-    };
+    refreshData();
   }, [barbeiroNome]);
 
   const monthStart = startOfMonth(monthRef);
@@ -191,10 +188,22 @@ function AgendaPage() {
         {/* Modal de Bloqueio de Agenda */}
         <Dialog open={openModal} onOpenChange={setOpenModal}>
           <DialogTrigger asChild>
-            <Button className="gap-2">
+            <Button variant="outline" className="gap-2 border-border/40 hover:bg-sidebar-accent">
               <CalendarX size={16} /> Bloquear Agenda
             </Button>
           </DialogTrigger>
+          <Button 
+            className="gap-2 shadow-glow" 
+            onClick={() => setIsManualOpen(true)}
+          >
+            <Plus size={16} /> Agendamento Manual
+          </Button>
+          <ManualAppointmentModal 
+            open={isManualOpen} 
+            onOpenChange={setIsManualOpen}
+            onSuccess={refreshData}
+            defaultBarbeiroNome={barbeiroNome}
+          />
           <DialogContent className="sm:max-w-[425px] bg-sidebar border-sidebar-border text-sidebar-foreground">
             <DialogHeader>
               <DialogTitle className="font-display">Bloquear Horário</DialogTitle>

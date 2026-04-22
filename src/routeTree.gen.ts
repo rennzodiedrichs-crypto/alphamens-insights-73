@@ -9,25 +9,37 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ServicosRouteImport } from './routes/servicos'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as LeadsRouteImport } from './routes/leads'
 import { Route as EquipeRouteImport } from './routes/equipe'
+import { Route as ClientesRouteImport } from './routes/clientes'
+import { Route as CaixaRouteImport } from './routes/caixa'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AgendaBarbeiroRouteImport } from './routes/agenda.$barbeiro'
 
+const ServicosRoute = ServicosRouteImport.update({
+  id: '/servicos',
+  path: '/servicos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LeadsRoute = LeadsRouteImport.update({
-  id: '/leads',
-  path: '/leads',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const EquipeRoute = EquipeRouteImport.update({
   id: '/equipe',
   path: '/equipe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClientesRoute = ClientesRouteImport.update({
+  id: '/clientes',
+  path: '/clientes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CaixaRoute = CaixaRouteImport.update({
+  id: '/caixa',
+  path: '/caixa',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -43,44 +55,81 @@ const AgendaBarbeiroRoute = AgendaBarbeiroRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/caixa': typeof CaixaRoute
+  '/clientes': typeof ClientesRoute
   '/equipe': typeof EquipeRoute
-  '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
+  '/servicos': typeof ServicosRoute
   '/agenda/$barbeiro': typeof AgendaBarbeiroRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/caixa': typeof CaixaRoute
+  '/clientes': typeof ClientesRoute
   '/equipe': typeof EquipeRoute
-  '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
+  '/servicos': typeof ServicosRoute
   '/agenda/$barbeiro': typeof AgendaBarbeiroRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/caixa': typeof CaixaRoute
+  '/clientes': typeof ClientesRoute
   '/equipe': typeof EquipeRoute
-  '/leads': typeof LeadsRoute
   '/login': typeof LoginRoute
+  '/servicos': typeof ServicosRoute
   '/agenda/$barbeiro': typeof AgendaBarbeiroRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/equipe' | '/leads' | '/login' | '/agenda/$barbeiro'
+  fullPaths:
+    | '/'
+    | '/caixa'
+    | '/clientes'
+    | '/equipe'
+    | '/login'
+    | '/servicos'
+    | '/agenda/$barbeiro'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/equipe' | '/leads' | '/login' | '/agenda/$barbeiro'
-  id: '__root__' | '/' | '/equipe' | '/leads' | '/login' | '/agenda/$barbeiro'
+  to:
+    | '/'
+    | '/caixa'
+    | '/clientes'
+    | '/equipe'
+    | '/login'
+    | '/servicos'
+    | '/agenda/$barbeiro'
+  id:
+    | '__root__'
+    | '/'
+    | '/caixa'
+    | '/clientes'
+    | '/equipe'
+    | '/login'
+    | '/servicos'
+    | '/agenda/$barbeiro'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CaixaRoute: typeof CaixaRoute
+  ClientesRoute: typeof ClientesRoute
   EquipeRoute: typeof EquipeRoute
-  LeadsRoute: typeof LeadsRoute
   LoginRoute: typeof LoginRoute
+  ServicosRoute: typeof ServicosRoute
   AgendaBarbeiroRoute: typeof AgendaBarbeiroRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/servicos': {
+      id: '/servicos'
+      path: '/servicos'
+      fullPath: '/servicos'
+      preLoaderRoute: typeof ServicosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -88,18 +137,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/leads': {
-      id: '/leads'
-      path: '/leads'
-      fullPath: '/leads'
-      preLoaderRoute: typeof LeadsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/equipe': {
       id: '/equipe'
       path: '/equipe'
       fullPath: '/equipe'
       preLoaderRoute: typeof EquipeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clientes': {
+      id: '/clientes'
+      path: '/clientes'
+      fullPath: '/clientes'
+      preLoaderRoute: typeof ClientesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/caixa': {
+      id: '/caixa'
+      path: '/caixa'
+      fullPath: '/caixa'
+      preLoaderRoute: typeof CaixaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -121,9 +177,11 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CaixaRoute: CaixaRoute,
+  ClientesRoute: ClientesRoute,
   EquipeRoute: EquipeRoute,
-  LeadsRoute: LeadsRoute,
   LoginRoute: LoginRoute,
+  ServicosRoute: ServicosRoute,
   AgendaBarbeiroRoute: AgendaBarbeiroRoute,
 }
 export const routeTree = rootRouteImport

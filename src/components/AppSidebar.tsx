@@ -1,15 +1,17 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Home, Users, Scissors, LogOut, BarChart } from "lucide-react";
+import { Home, Users, Scissors, LogOut, BarChart, Info, Calculator } from "lucide-react";
 import logo from "@/assets/alpha-logo.png";
 import { useAuth } from "@/hooks/useAuth";
-
-const BARBERS = [
-  "Adriano",
-  "Gustavo",
-  "Gabriel Oliveira",
-  "Gabriel Santos",
-  "Arthur Fontes",
-];
+import { fetchProfissionais } from "@/lib/equipe";
+import { useState, useEffect } from "react";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 const slugify = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "-");
@@ -24,6 +26,11 @@ export function SidebarContent({ onItemClick, hideHeader = false }: SidebarConte
   const path = location.pathname;
   const { signOut, role, barberName } = useAuth();
   const navigate = useNavigate();
+  const [profissionais, setProfissionais] = useState<{id: string, nome: string}[]>([]);
+
+  useEffect(() => {
+    fetchProfissionais().then(setProfissionais);
+  }, [path]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -49,7 +56,7 @@ export function SidebarContent({ onItemClick, hideHeader = false }: SidebarConte
       ].join(" ")}>
         {icon}
       </span>
-      <span className="font-medium tracking-wide">{label}</span>
+      <span className="font-medium tracking-wide truncate">{label}</span>
       {active && (
         <div className="absolute left-0 w-1 h-5 bg-primary rounded-r-full shadow-glow" />
       )}
@@ -82,7 +89,9 @@ export function SidebarContent({ onItemClick, hideHeader = false }: SidebarConte
               Geral
             </div>
             {navItem("/", path === "/", <Home size={18} />, "Página Inicial")}
-            {navItem("/leads", path === "/leads", <Users size={18} />, "Lista de Leads")}
+            {navItem("/caixa", path === "/caixa", <Calculator size={18} />, "Caixa (POS)")}
+            {navItem("/clientes", path === "/clientes", <Users size={18} />, "Lista de Clientes")}
+            {navItem("/servicos", path === "/servicos", <Scissors size={18} />, "Catálogo de Serviços")}
             {navItem("/equipe", path === "/equipe", <BarChart size={18} />, "Gestão de Equipe")}
           </>
         )}
@@ -91,9 +100,68 @@ export function SidebarContent({ onItemClick, hideHeader = false }: SidebarConte
           Agendas
         </div>
         <div className="space-y-1">
-          {BARBERS.filter((b) => isAdmin || b === barberName).map((b) => {
-            const to = `/agenda/${slugify(b)}`;
-            return navItem(to, path === to, <Scissors size={16} />, b);
+          {profissionais.filter((p) => isAdmin || p.nome === barberName).map((p) => {
+            const to = `/agenda/${slugify(p.nome)}`;
+            const active = path === to;
+            return (
+              <div key={p.id} className="group relative flex items-center gap-1 pr-2">
+                <Link
+                  to={to}
+                  onClick={onItemClick}
+                  className={[
+                    "flex-1 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-300",
+                    active
+                      ? "bg-primary/10 text-primary border border-primary/20 shadow-glow"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                  ].join(" ")}
+                >
+                  <Scissors size={16} className={active ? "text-primary" : "text-sidebar-foreground/50"} />
+                  <span className="font-medium tracking-wide truncate">{p.nome}</span>
+                  {active && (
+                    <div className="absolute left-0 w-1 h-5 bg-primary rounded-r-full shadow-glow" />
+                  )}
+                </Link>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-sidebar-accent text-sidebar-foreground/40 hover:text-primary transition-colors">
+                      <Info size={14} />
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[400px] bg-sidebar border-sidebar-border text-sidebar-foreground">
+                    <DialogHeader>
+                      <DialogTitle className="font-display flex items-center gap-2">
+                        <Info className="text-primary" size={18} /> Perfil: {p.nome}
+                      </DialogTitle>
+                    </DialogHeader>
+                    <div className="py-6 space-y-6">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-4 rounded-xl bg-sidebar-accent/20 border border-sidebar-border/50 text-center">
+                          <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Status</div>
+                          <div className="text-sm font-bold text-success">Ativo</div>
+                        </div>
+                        <div className="p-4 rounded-xl bg-sidebar-accent/20 border border-sidebar-border/50 text-center">
+                          <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Agenda</div>
+                          <div className="text-sm font-bold">Aberta</div>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <h4 className="text-xs font-bold uppercase tracking-widest text-primary/70">Ações Rápidas</h4>
+                        <Button 
+                          variant="outline" 
+                          className="w-full justify-start gap-3 border-sidebar-border hover:bg-sidebar-accent"
+                          onClick={() => {
+                            navigate({ to: `/agenda/${slugify(p.nome)}` });
+                            onItemClick?.();
+                          }}
+                        >
+                          <BarChart size={16} /> Ver Performance Completa
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            );
           })}
         </div>
       </nav>
@@ -129,5 +197,5 @@ export function AppSidebar() {
   );
 }
 
-export const BARBER_LIST = BARBERS;
+export const BARBER_LIST = [] as string[]; // Agora dinâmico, mas mantido para compatibilidade de tipos se necessário
 export const barberSlug = slugify;
