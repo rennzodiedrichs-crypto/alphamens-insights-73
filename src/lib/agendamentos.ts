@@ -12,42 +12,29 @@ export type AgendamentoInput = {
 };
 
 export async function criarAgendamentoManual(input: AgendamentoInput) {
-  // 1. Criar o agendamento
-  const { data: agendamento, error: agendamentoError } = await supabase
-    .from("agendamentos")
-    .insert({
-      cliente_id: input.cliente_id,
-      profissional_id: input.profissional_id,
-      data_hora_agendada: input.data_hora_agendada,
-      status: input.status || "pendente",
-    })
-    .select()
-    .single();
+  const { data, error } = await supabase.rpc("fnc_criar_agendamento_seguro", {
+    p_cliente_id: input.cliente_id,
+    p_profissional_id: input.profissional_id,
+    p_data_hora: input.data_hora_agendada,
+    p_servico_ids: input.servicos.map((s) => s.servico_id),
+  });
 
-  if (agendamentoError) {
-    console.error("Erro ao criar agendamento:", agendamentoError);
-    throw agendamentoError;
+  if (error) {
+    console.error("Erro no RPC de agendamento:", error);
+    throw error;
   }
 
-  // 2. Vincular os serviços
-  const servicosToInsert = input.servicos.map((s) => ({
-    agendamento_id: agendamento.id,
-    servico_id: s.servico_id,
-    preco_cobrado: s.preco_cobrado,
-  }));
-
-  const { error: servicosError } = await supabase
-    .from("agendamentos_servicos")
-    .insert(servicosToInsert);
-
-  if (servicosError) {
-    console.error("Erro ao vincular serviços ao agendamento:", servicosError);
-    // Idealmente aqui faríamos um rollback do agendamento, mas como é Supabase sem transação explícita via JS simple, 
-    // assumimos que o fluxo é controlado.
-    throw servicosError;
+  if (data === null || data === undefined) {
+    throw new Error("Sem resposta do servidor. Verifique as permissões da função.");
   }
 
-  return agendamento;
+  const result = data as { success: boolean; error?: string; agendamento_id?: string };
+
+  if (!result.success) {
+    throw new Error(result.error || "Erro desconhecido ao criar agendamento");
+  }
+
+  return { id: result.agendamento_id };
 }
 
 export async function fetchServicos() {

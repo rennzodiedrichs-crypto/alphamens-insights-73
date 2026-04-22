@@ -27,6 +27,10 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { 
+  Alert,
+  AlertDescription 
+} from "@/components/ui/alert";
 import { fetchClientes, createCliente, type Cliente } from "@/lib/clientes";
 import { fetchProfissionais } from "@/lib/equipe";
 import { fetchServicos, criarAgendamentoManual } from "@/lib/agendamentos";
@@ -61,6 +65,7 @@ export function ManualAppointmentModal({
   const [selectedServicosIds, setSelectedServicosIds] = useState<string[]>([]);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -112,6 +117,7 @@ export function ManualAppointmentModal({
     }
 
     setLoading(true);
+    setFormError(null);
     try {
       let clientId = selectedClientId;
 
@@ -131,23 +137,24 @@ export function ManualAppointmentModal({
         };
       });
 
-      await criarAgendamentoManual({
+      const result = await criarAgendamentoManual({
         cliente_id: clientId,
         profissional_id: selectedProId,
         data_hora_agendada: scheduledAt,
         servicos: selectedServicosDetails
       });
 
+      console.log("[MODAL DEBUG] Resultado:", result);
+
       toast.success("Agendamento realizado com sucesso!");
       onSuccess?.();
       onOpenChange(false);
       resetForm();
     } catch (error: any) {
-      if (error.message === "TELEFONE_DUPLICADO") {
-        toast.error("O telefone informado já se encontra cadastrado para outro cliente no banco de dados.");
-      } else {
-        toast.error("Erro ao criar agendamento");
-      }
+      console.error("[MODAL DEBUG] Erro capturado:", error);
+      const msg = error?.message || "Erro ao criar agendamento";
+      setFormError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -184,6 +191,14 @@ export function ManualAppointmentModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
+          {formError && (
+            <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 animate-reveal">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="text-xs font-medium">
+                {formError}
+              </AlertDescription>
+            </Alert>
+          )}
           {/* Busca de Cliente */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">

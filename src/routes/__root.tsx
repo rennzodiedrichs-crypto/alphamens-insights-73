@@ -59,6 +59,8 @@ export const Route = createRootRoute({
   notFoundComponent: NotFoundComponent,
 });
 
+import { Toaster } from "@/components/ui/sonner";
+
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" className="dark">
@@ -69,6 +71,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
         <AuthProvider>
           {children}
         </AuthProvider>
+        <Toaster theme="dark" position="bottom-right" richColors closeButton />
         <Scripts />
       </body>
     </html>
