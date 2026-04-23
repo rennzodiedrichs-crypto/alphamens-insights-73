@@ -3,7 +3,7 @@ FROM oven/bun:latest AS builder
 
 WORKDIR /app
 
-# Variáveis de ambiente para o build
+# Variáveis de ambiente para o build (Injetadas no frontend pelo Vite)
 ARG VITE_SUPABASE_URL
 ARG VITE_SUPABASE_PUBLISHABLE_KEY
 ARG VITE_SUPABASE_PROJECT_ID
@@ -11,11 +11,13 @@ ARG VITE_SUPABASE_PROJECT_ID
 ENV VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
 ENV VITE_SUPABASE_PUBLISHABLE_KEY=${VITE_SUPABASE_PUBLISHABLE_KEY}
 ENV VITE_SUPABASE_PROJECT_ID=${VITE_SUPABASE_PROJECT_ID}
+# Forçar o preset node-server para gerar a estrutura .output/server/index.mjs
+ENV NITRO_PRESET=node-server
 
 # Copy package files
 COPY package.json bun.lockb* package-lock.json* ./
 
-# Install ALL dependencies (including dev) for the build process
+# Install dependencies
 RUN bun install
 
 # Copy source code
@@ -40,16 +42,15 @@ ENV VITE_SUPABASE_PROJECT_ID=${VITE_SUPABASE_PROJECT_ID}
 ENV PORT=3010
 ENV NODE_ENV=production
 
-# Copiar o resultado do build
-COPY --from=builder /app/dist /app/dist
-COPY --from=builder /app/package.json /app/package.json
-COPY --from=builder /app/bun.lockb* /app/bun.lockb*
+# Copiar o resultado do build do motor Nitro (.output)
+COPY --from=builder /app/.output ./.output
+COPY --from=builder /app/package.json ./package.json
 
-# IMPORTANTE: Instalar dependências de produção para que o server.js funcione
+# Instalar dependências de produção
 RUN bun install --production
 
 # Expose the port 3010
 EXPOSE 3010
 
-# Command to run the application
-CMD ["bun", "dist/server/server.js"]
+# Ponto de entrada padrão para deploys Node/Bun do Nitro
+CMD ["bun", ".output/server/index.mjs"]
