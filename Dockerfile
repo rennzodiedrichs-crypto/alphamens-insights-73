@@ -11,7 +11,6 @@ ARG VITE_SUPABASE_PROJECT_ID
 ENV VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
 ENV VITE_SUPABASE_PUBLISHABLE_KEY=${VITE_SUPABASE_PUBLISHABLE_KEY}
 ENV VITE_SUPABASE_PROJECT_ID=${VITE_SUPABASE_PROJECT_ID}
-# Forçar o preset node-server para gerar a estrutura .output/server/index.mjs
 ENV NITRO_PRESET=node-server
 
 # Copy package files
@@ -42,9 +41,10 @@ ENV VITE_SUPABASE_PROJECT_ID=${VITE_SUPABASE_PROJECT_ID}
 ENV PORT=3010
 ENV NODE_ENV=production
 
-# Copiar o resultado do build do motor Nitro (.output)
-COPY --from=builder /app/.output ./.output
+# Copiar o resultado do build da pasta 'dist' (identificada no log)
+COPY --from=builder /app/dist /app/dist
 COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/bun.lockb* ./bun.lockb*
 
 # Instalar dependências de produção
 RUN bun install --production
@@ -52,5 +52,5 @@ RUN bun install --production
 # Expose the port 3010
 EXPOSE 3010
 
-# Ponto de entrada padrão para deploys Node/Bun do Nitro
-CMD ["bun", ".output/server/index.mjs"]
+# Ponto de entrada identificado no log mais recente
+CMD ["bun", "dist/server/index.js"]
