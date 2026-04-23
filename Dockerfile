@@ -41,10 +41,16 @@ ENV VITE_SUPABASE_PROJECT_ID=${VITE_SUPABASE_PROJECT_ID}
 ENV PORT=3010
 ENV NODE_ENV=production
 
-# Copiar o resultado do build da pasta 'dist' (identificada no log)
+# Variável de ambiente para o Nitro localizar os arquivos estáticos (CSS/JS)
+ENV NITRO_PUBLIC_DIR=/app/dist/public
+
+# Copiar o resultado do build
 COPY --from=builder /app/dist /app/dist
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/bun.lockb* ./bun.lockb*
+
+# Alinhando a estrutura de pastas: Nitro espera 'public' para os assets
+RUN mv /app/dist/client /app/dist/public
 
 # Instalar dependências de produção
 RUN bun install --production
@@ -52,5 +58,5 @@ RUN bun install --production
 # Expose the port 3010
 EXPOSE 3010
 
-# Ponto de entrada identificado no log mais recente
+# Ponto de entrada identificado no log
 CMD ["bun", "dist/server/index.js"]
