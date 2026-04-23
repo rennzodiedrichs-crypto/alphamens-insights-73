@@ -23,7 +23,10 @@ import {
   Scissors,
   CalendarX,
   Plus,
+  Trash2,
+  AlertTriangle
 } from "lucide-react";
+import { cancelarAgendamento } from "@/lib/agendamentos";
 import { fetchLeadsByBarber, type Lead } from "@/lib/leads";
 import { StatCard } from "@/components/StatCard";
 import { formatBRL, formatTimeBR } from "@/lib/format";
@@ -106,6 +109,17 @@ function AgendaPage() {
       }
     }
   }, [authLoading, role, barberName, barbeiro, navigate]);
+
+  const handleCancel = async (id: string) => {
+    if (!confirm("Tem certeza que deseja cancelar este agendamento?")) return;
+    try {
+      await cancelarAgendamento(id);
+      refreshData();
+    } catch (error) {
+      alert("Erro ao cancelar agendamento.");
+    }
+  };
+
   const refreshData = () => {
     setLoading(true);
     fetchLeadsByBarber(barbeiroNome)
@@ -386,14 +400,32 @@ function AgendaPage() {
             {selectedLeads.map((l) => (
               <div
                 key={l.identificador_usuario}
-                className="rounded-lg border border-border/60 bg-background/40 p-3 hover:border-primary/40 transition-colors"
+                className={[
+                  "rounded-lg border border-border/60 bg-background/40 p-3 hover:border-primary/40 transition-colors",
+                  l.status === "cancelado" ? "opacity-50 grayscale" : ""
+                ].join(" ")}
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="font-semibold text-foreground truncate">
                     {l.nome ?? "Sem nome"}
                   </div>
-                  <div className="text-primary font-display text-lg tabular-nums">
-                    {formatTimeBR(l.data_hora_agendada)}
+                  <div className="flex items-center gap-3">
+                    <div className="text-primary font-display text-lg tabular-nums">
+                      {formatTimeBR(l.data_hora_agendada)}
+                    </div>
+                    {l.id_agendamento && l.status !== "cancelado" && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCancel(l.id_agendamento!);
+                        }}
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    )}
                   </div>
                 </div>
                 <div className="mt-1 flex items-center justify-between text-xs">

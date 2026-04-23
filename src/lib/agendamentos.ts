@@ -47,3 +47,59 @@ export async function fetchServicos() {
   if (error) throw error;
   return data || [];
 }
+
+export async function cancelarAgendamento(agendamentoId: string) {
+  const { error } = await supabase
+    .from("agendamentos")
+    .update({ status: "cancelado" })
+    .eq("id", agendamentoId);
+
+  if (error) {
+    console.error("Erro ao cancelar agendamento:", error);
+    throw error;
+  }
+}
+
+export async function fetchUltimoAgendamentoPorCliente(clienteId: string) {
+  const { data, error } = await supabase
+    .from("agendamentos")
+    .select(`
+      *,
+      clientes ( whatsapp, nome ),
+      profissionais ( nome ),
+      agendamentos_servicos ( preco_cobrado, servicos ( nome ) ),
+      pagamentos ( valor_total )
+    `)
+    .eq("cliente_id", clienteId)
+    .order("criado_em", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Erro ao buscar último agendamento:", error);
+    throw error;
+  }
+
+  if (!data) return null;
+
+  // Adaptador simples para o formato que a UI precisa
+  const row = data;
+  const relacaoServicos = row.agendamentos_servicos || [];
+  const servicosNomes = relacaoServicos.map((s: any) => s.servicos?.nome).filter(Boolean).join(', ') || null;
+  const valorTotal = row.pagamentos?.[0]?.valor_total 
+    ?? relacaoServicos.reduce((acc: number, curr: any) => acc + (curr.preco_cobrado || 0), 0) 
+    ?? 0;
+
+  return {
+    id: row.id,
+    cliente_nome: row.clientes?.nome,
+    whatsapp: row.clientes?.whatsapp,
+    servico: servicosNomes,
+    valor: valorTotal,
+    status: row.status,
+    data_hora: row.data_hora_agendada,
+    barbeiro: row.profissionais?.nome,
+    resumo: row.resumo_conversa,
+    inicio_atendimento: row.inicio_atendimento_em
+  };
+}

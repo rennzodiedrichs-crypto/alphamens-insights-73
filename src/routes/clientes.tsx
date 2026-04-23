@@ -1,5 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { fetchClientes, createCliente, updateCliente, deleteCliente, type Cliente } from "@/lib/clientes";
+import { cancelarAgendamento, fetchUltimoAgendamentoPorCliente } from "@/lib/agendamentos";
+import { formatPhone, formatBRL } from "@/lib/format";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { 
   Users, 
   Search, 
@@ -9,10 +14,13 @@ import {
   Phone, 
   UserPlus,
   X,
-  Check
+  Check,
+  Calendar,
+  Clock,
+  Scissors,
+  MessageSquare,
+  AlertTriangle
 } from "lucide-react";
-import { fetchClientes, createCliente, updateCliente, deleteCliente, type Cliente } from "@/lib/clientes";
-import { formatPhone } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -50,6 +58,11 @@ function ClientesPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [formData, setFormData] = useState<Partial<Cliente>>({ nome: "", whatsapp: "" });
+
+  // Info Sheet State
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [agendamentoDetalhes, setAgendamentoDetalhes] = useState<any>(null);
+  const [loadingDetalhes, setLoadingDetalhes] = useState(false);
 
   const loadClientes = async (search?: string) => {
     setLoading(true);
@@ -116,6 +129,35 @@ function ClientesPage() {
     setIsFormOpen(true);
   };
 
+  const openInfoSheet = async (cliente: Cliente) => {
+    setSelectedCliente(cliente);
+    setIsSheetOpen(true);
+    setLoadingDetalhes(true);
+    try {
+      const data = await fetchUltimoAgendamentoPorCliente(cliente.id);
+      setAgendamentoDetalhes(data);
+    } catch (error) {
+      toast.error("Erro ao carregar detalhes do agendamento");
+    } finally {
+      setLoadingDetalhes(false);
+    }
+  };
+
+  const handleCancelarAgendamento = async (id: string) => {
+    if (!confirm("Tem certeza que deseja cancelar este agendamento?")) return;
+    
+    try {
+      await cancelarAgendamento(id);
+      toast.success("Agendamento cancelado com sucesso");
+      // Atualiza os detalhes no sheet
+      if (selectedCliente) {
+        openInfoSheet(selectedCliente);
+      }
+    } catch (error) {
+      toast.error("Erro ao cancelar agendamento");
+    }
+  };
+
   return (
     <div className="px-6 py-8 md:px-10 md:py-10 max-w-[1600px] mx-auto min-h-screen">
       <header className="mb-10 flex flex-wrap items-end justify-between gap-4 animate-reveal">
@@ -171,8 +213,11 @@ function ClientesPage() {
                   <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
                     <Users size={20} className="text-primary" />
                   </div>
-                  <div>
-                    <h3 className="font-display text-xl text-foreground leading-tight tracking-tight">
+                  <div 
+                    className="cursor-pointer group/name" 
+                    onClick={() => openInfoSheet(cliente)}
+                  >
+                    <h3 className="font-display text-xl text-foreground leading-tight tracking-tight group-hover/name:text-primary transition-colors">
                       {cliente.nome}
                     </h3>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
@@ -276,6 +321,135 @@ function ClientesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Sheet de Informações do Cliente */}
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetContent className="bg-sidebar border-sidebar-border sm:max-w-md overflow-y-auto p-0">
+          {loadingDetalhes ? (
+            <div className="flex h-full items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+          ) : !selectedCliente ? null : (
+            <div className="flex flex-col min-h-full">
+              <div className="p-8 text-center border-b border-sidebar-border/50 bg-sidebar/50">
+                <h2 className="font-display text-3xl text-foreground uppercase tracking-tight">
+                  {selectedCliente.nome}
+                </h2>
+              </div>
+
+              <div className="flex-1 p-6 space-y-8">
+                {/* Informações Principais */}
+                <section className="space-y-4">
+                  <h3 className="text-[10px] uppercase tracking-[0.4em] text-muted-foreground font-bold">
+                    Informações Principais
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm py-1 border-b border-sidebar-border/30">
+                      <span className="text-muted-foreground flex items-center gap-2">
+                        <Phone size={14} /> WhatsApp
+                      </span>
+                      <span className="text-foreground font-medium">{formatPhone(selectedCliente.whatsapp)}</span>
+                    </div>
+                    {agendamentoDetalhes && (
+                      <>
+                        <div className="flex items-center justify-between text-sm py-1 border-b border-sidebar-border/30">
+                          <span className="text-muted-foreground flex items-center gap-2">
+                            <Scissors size={14} /> Serviço
+                          </span>
+                          <span className="text-foreground font-medium lowercase">{agendamentoDetalhes.servico || "—"}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm py-1 border-b border-sidebar-border/30">
+                          <span className="text-muted-foreground">Valor</span>
+                          <span className="text-primary font-bold">{formatBRL(agendamentoDetalhes.valor)}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm py-1 border-b border-sidebar-border/30">
+                          <span className="text-muted-foreground">Status</span>
+                          <span className={[
+                            "font-semibold capitalize",
+                            agendamentoDetalhes.status === "cancelado" ? "text-destructive" :
+                            agendamentoDetalhes.status === "concluido" ? "text-success" : "text-foreground"
+                          ].join(" ")}>
+                            {agendamentoDetalhes.status === "pendente" ? "Agendado" : agendamentoDetalhes.status}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </section>
+
+                {agendamentoDetalhes ? (
+                  <>
+                    {/* Agendamento */}
+                    <section className="space-y-4">
+                      <h3 className="text-[10px] uppercase tracking-[0.4em] text-muted-foreground font-bold">
+                        Agendamento
+                      </h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between text-sm py-1 border-b border-sidebar-border/30">
+                          <span className="text-muted-foreground flex items-center gap-2">
+                            <Calendar size={14} /> Data e hora
+                          </span>
+                          <span className="text-success font-bold">
+                            {agendamentoDetalhes.data_hora 
+                              ? format(new Date(agendamentoDetalhes.data_hora), "dd/MM HH:mm", { locale: ptBR })
+                              : "—"}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm py-1 border-b border-sidebar-border/30">
+                          <span className="text-muted-foreground">Barbeiro</span>
+                          <span className="text-foreground font-medium">{agendamentoDetalhes.barbeiro || "—"}</span>
+                        </div>
+                      </div>
+                    </section>
+
+                    {/* Resumo da Conversa */}
+                    {agendamentoDetalhes.resumo && (
+                      <section className="space-y-4">
+                        <h3 className="text-[10px] uppercase tracking-[0.4em] text-muted-foreground font-bold flex items-center gap-2">
+                          <MessageSquare size={12} /> Resumo da Conversa
+                        </h3>
+                        <div className="p-4 rounded-xl bg-sidebar-accent/30 border border-sidebar-border/50 text-sm text-foreground/80 leading-relaxed italic">
+                          {agendamentoDetalhes.resumo}
+                        </div>
+                      </section>
+                    )}
+
+                    {/* Botão de Cancelamento */}
+                    {(agendamentoDetalhes.status === "pendente" || agendamentoDetalhes.status === "confirmado") && (
+                      <div className="pt-4">
+                        <Button 
+                          variant="outline" 
+                          className="w-full gap-2 border-destructive/20 text-destructive hover:bg-destructive/10 hover:border-destructive/40"
+                          onClick={() => handleCancelarAgendamento(agendamentoDetalhes.id)}
+                        >
+                          <AlertTriangle size={16} /> Cancelar Agendamento
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="py-10 text-center space-y-3">
+                    <div className="h-12 w-12 rounded-full bg-sidebar-accent/50 flex items-center justify-center mx-auto text-muted-foreground">
+                      <Calendar size={24} />
+                    </div>
+                    <p className="text-sm text-muted-foreground italic">
+                      Nenhum agendamento encontrado para este cliente.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {agendamentoDetalhes?.inicio_atendimento && (
+                <div className="p-6 mt-auto border-t border-sidebar-border/50 bg-sidebar/30">
+                  <p className="text-[10px] text-muted-foreground/50 uppercase tracking-widest text-center">
+                    Início do atendimento: {format(new Date(agendamentoDetalhes.inicio_atendimento), "dd/MM HH:mm", { locale: ptBR })}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

@@ -217,7 +217,7 @@ function ServicosPage() {
                 {servicos.map((servico) => (
                   <TableRow key={servico.id} className="border-sidebar-border hover:bg-sidebar-accent/30">
                     <TableCell className="font-medium font-display">{servico.nome}</TableCell>
-                    <TableCell className="text-muted-foreground text-xs truncate max-w-[200px]">
+                    <TableCell className="text-muted-foreground text-sm truncate max-w-[300px]">
                       {servico.descricao || "-"}
                     </TableCell>
                     <TableCell className="text-right">{servico.duracao_estimada_minutos} min</TableCell>

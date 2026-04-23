@@ -42,13 +42,21 @@ BEGIN
         RETURN jsonb_build_object('success', false, 'error', 'Profissional não encontrado.');
     END IF;
 
-    -- 3. Resolver Serviços (por array de IDs ou por nome aproximado)
+    -- 3. Resolver Serviços (por array de IDs ou por nomes separados por vírgula)
     IF v_final_servico_ids IS NULL AND p_servico_nome IS NOT NULL THEN
-        SELECT ARRAY[id] INTO v_final_servico_ids FROM public.servicos
-        WHERE nome ILIKE '%' || p_servico_nome || '%' AND status = 'ativo' LIMIT 1;
+        SELECT array_agg(id) INTO v_final_servico_ids
+        FROM public.servicos
+        WHERE id IN (
+            SELECT s.id
+            FROM public.servicos s,
+                 unnest(string_to_array(p_servico_nome, ',')) AS s_nome
+            WHERE s.nome ILIKE '%' || trim(s_nome) || '%'
+            AND s.status = 'ativo'
+        );
     END IF;
+
     IF v_final_servico_ids IS NULL OR array_length(v_final_servico_ids, 1) = 0 THEN
-        RETURN jsonb_build_object('success', false, 'error', 'Nenhum serviço selecionado.');
+        RETURN jsonb_build_object('success', false, 'error', 'Nenhum serviço selecionado ou encontrado.');
     END IF;
 
     -- 4. Calcular Totais (mínimo 30 minutos se duração ausente)
@@ -94,12 +102,28 @@ BEGIN
         RETURN jsonb_build_object('success', false, 'error', 'Conflito de horário: o profissional já tem um agendamento neste período.');
     END IF;
 
-    -- 7. Criar Agendamento
-    INSERT INTO public.agendamentos (cliente_id, profissional_id, data_hora_agendada, status)
-    VALUES (v_cliente_id, v_profissional_id, p_data_hora, 'pendente')
+    -- 7. Criar Agendamento (Relacionamento N:N - Sem colunas servicos/valor_servico)
+    INSERT INTO public.agendamentos (
+        cliente_id, 
+        profissional_id, 
+        data_hora_agendada, 
+        status,
+        id_conta_chatwoot,
+        id_conversa_chatwoot,
+        inbox_id_chatwoot
+    )
+    VALUES (
+        v_cliente_id, 
+        v_profissional_id, 
+        p_data_hora, 
+        'pendente',
+        p_chatwoot_info->>'account_id',
+        p_chatwoot_info->>'conversation_id',
+        p_chatwoot_info->>'inbox_id'
+    )
     RETURNING id INTO v_agendamento_id;
 
-    -- 8. Vincular Serviços
+    -- 8. Vincular Serviços na tabela intermediária
     FOREACH v_serv_id IN ARRAY v_final_servico_ids
     LOOP
         INSERT INTO public.agendamentos_servicos (agendamento_id, servico_id, preco_cobrado)

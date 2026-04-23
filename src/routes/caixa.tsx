@@ -153,16 +153,16 @@ function CaixaPage() {
                             <User className="h-4 w-4 text-primary" />
                             {ag.cliente?.nome || "Cliente Removido"}
                           </CardTitle>
-                          <div className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
+                          <div className="text-sm text-muted-foreground flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
                             {formatTimeBR(ag.data_hora_agendada)} com {ag.profissional?.nome}
                           </div>
                         </div>
                         {isPago && <CheckCircle2 className="h-5 w-5 text-success" />}
                       </div>
                     </CardHeader>
-                    <CardContent className="pb-3 text-sm">
-                      <ul className="space-y-1 text-muted-foreground">
+                    <CardContent className="pb-3 text-base">
+                      <ul className="space-y-2 text-foreground font-medium">
                         {ag.servicos.map((s, idx) => (
                           <li key={idx} className="flex justify-between">
                             <span>{s.nome}</span>

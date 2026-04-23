@@ -106,7 +106,7 @@ function HomePage() {
   }, [leads]);
 
   return (
-    <div className="px-6 py-8 md:px-10 md:py-10 max-w-[1600px] mx-auto overflow-hidden">
+    <div className="legacy-font-section px-6 py-8 md:px-10 md:py-10 max-w-[1600px] mx-auto overflow-hidden">
       <header className="mb-10 flex flex-wrap items-end justify-between gap-4 animate-reveal">
         <div>
           <div className="text-[10px] uppercase tracking-[0.4em] text-primary mb-3 font-bold opacity-80">Dashboard Intuitivo</div>
