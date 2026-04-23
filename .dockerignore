@@ -1,9 +1,5 @@
 node_modules
 .git
 .env
-dist
-.output
 .tanstack
-bun.lockb
-package-lock.json
 *.md

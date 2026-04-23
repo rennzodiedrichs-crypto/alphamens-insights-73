@@ -26,9 +26,10 @@ Estas variáveis são essenciais para que o frontend e o backend se comuniquem c
 
 ## Configuração Local (Docker Compose)
 
-Se for rodar localmente com Docker Compose, crie um arquivo `.env` na raiz do projeto com estas variáveis antes de rodar `docker-compose up`.
+Se for rodar localmente com Docker Compose, crie um arquivo `.env` na raiz do projeto com estas variáveis antes de rodar `docker-compose up`. O sistema estará disponível em `http://localhost:3010`.
 
 ```env
+PORT=3010
 VITE_SUPABASE_URL=seu_url
 VITE_SUPABASE_PUBLISHABLE_KEY=sua_chave
 VITE_SUPABASE_PROJECT_ID=seu_id

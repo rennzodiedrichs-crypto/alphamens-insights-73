@@ -13,8 +13,10 @@ RUN bun install
 COPY . .
 
 # Build the application
-# We use --mode production to ensure production optimizations
-RUN bun run build
+# Forcing node-server preset to ensure it works with Bun/Node
+ENV NITRO_PRESET=node-server
+# Build the app and list files for debugging if it fails
+RUN bun run build && ls -la /app
 
 # Final stage
 FROM oven/bun:latest
@@ -22,14 +24,16 @@ FROM oven/bun:latest
 WORKDIR /app
 
 # Copy build output from builder
+# We try to copy .output which is the standard for node-server preset
 COPY --from=builder /app/.output ./.output
 COPY --from=builder /app/package.json ./package.json
 
-# Expose the port (TanStack Start defaults to 3000 in production usually, but we can configure it)
-EXPOSE 3000
+# Expose the port 3010 as requested
+EXPOSE 3010
 
-# Set environment to production
+# Set environment to production and define the port
 ENV NODE_ENV=production
+ENV PORT=3010
 
 # Command to run the application
 # Nitro output usually has a server entry point
