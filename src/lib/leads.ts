@@ -21,6 +21,7 @@ export type Lead = {
   id_conversa_chatwoot: string | null;
   id_lead_chatwoot: string | null;
   inbox_id_chatwoot: string | null;
+  cliente_id: string | null;
 };
 
 // Função adaptadora: Converte o retorno relacional do Supabase para o formato plano (Lead) que a UI espera
@@ -39,24 +40,25 @@ function mapToLead(row: any): Lead {
 
   return {
     id: row.id,
-    identificador_usuario: cliente.identificador_usuario || '',
+    identificador_usuario: cliente.identificador_usuario || row.whatsapp || '',
     inicio_atendimento_em: row.inicio_atendimento_em,
     inicio_fora_horario_comercial: row.inicio_fora_horario_comercial,
-    nome: cliente.nome || null,
-    whatsapp: cliente.whatsapp || null,
+    nome: row.nome_cliente || cliente.nome || null,
+    whatsapp: row.whatsapp || cliente.whatsapp || null,
     status: row.status,
-    servicos: servicosNomes,
-    valor_servico: valorTotal,
+    servicos: row.servicos || servicosNomes,
+    valor_servico: row.valor_servico || valorTotal,
     data_hora_agendada: row.data_hora_agendada,
-    barbeiro: profissional.nome || null,
-    id_agendamento: row.id, // Mapeado para a nova PK
+    barbeiro: row.barbeiro_nome || profissional.nome || null,
+    id_agendamento: row.id,
     marcou_no_grupo: row.marcou_no_grupo,
-    timestamp_ultima_msg: row.atualizado_em || row.criado_em, // Fallback para timestamp
+    timestamp_ultima_msg: row.timestamp_ultima_msg || row.atualizado_em || row.criado_em,
     resumo_conversa: row.resumo_conversa,
     id_conta_chatwoot: row.id_conta_chatwoot,
     id_conversa_chatwoot: row.id_conversa_chatwoot,
     id_lead_chatwoot: cliente.id_lead_chatwoot || null,
     inbox_id_chatwoot: row.inbox_id_chatwoot,
+    cliente_id: row.cliente_id,
   };
 }
 
@@ -100,22 +102,23 @@ export async function fetchLeadsInRange(from: Date, to: Date): Promise<Lead[]> {
 }
 
 export async function fetchLeadsByBarber(barbeiro: string): Promise<Lead[]> {
-  // Para filtrar por uma coluna de tabela associada (profissionais.nome), usamos inner join syntax no Supabase
+  // Removemos o 'inner' join do profissionais para não quebrar agendamentos vindos do n8n (que não possuem profissional_id)
   const { data, error } = await supabase
     .from("agendamentos")
     .select(`
       *,
       clientes ( identificador_usuario, nome, whatsapp, id_lead_chatwoot ),
-      profissionais!inner ( nome ),
+      profissionais ( nome ),
       agendamentos_servicos ( preco_cobrado, servicos ( nome ) ),
       pagamentos ( valor_total )
     `)
-    .eq("profissionais.nome", barbeiro)
     .not("data_hora_agendada", "is", null)
     .order("data_hora_agendada", { ascending: true })
     .limit(1000);
 
   if (error) throw error;
   
-  return (data ?? []).map(mapToLead);
+  // Realiza a filtragem pelo nome do barbeiro no cliente (compatível tanto com a tabela relacional quanto a plana)
+  const allLeads = (data ?? []).map(mapToLead);
+  return allLeads.filter(l => l.barbeiro === barbeiro);
 }

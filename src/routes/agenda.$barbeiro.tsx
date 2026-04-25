@@ -37,6 +37,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { criarAusencia, fetchProfissionais, fetchProfissionalBySlug } from "@/lib/equipe";
 import { ManualAppointmentModal } from "@/components/ManualAppointmentModal";
+import { ClienteDetailsSheet } from "@/components/ClienteDetailsSheet";
 
 export const Route = createFileRoute("/agenda/$barbeiro")({
   loader: async ({ params }) => {
@@ -73,6 +74,8 @@ function AgendaPage() {
   const [newMotivo, setNewMotivo] = useState("");
    const [profissionalId, setProfissionalId] = useState<string>("");
   const [isManualOpen, setIsManualOpen] = useState(false);
+  const [selectedCliente, setSelectedCliente] = useState<{id: string, nome: string, whatsapp: string} | null>(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   useEffect(() => {
     fetchProfissionais().then(profs => {
@@ -183,6 +186,15 @@ function AgendaPage() {
     );
     return map;
   }, [monthLeads]);
+
+  const openClienteDetails = (lead: Lead) => {
+    // Como o 'Lead' pode não ter o ID do cliente direto mas tem o whatsapp, 
+    // precisamos garantir que temos os dados necessários.
+    // Na verdade, o fetchLeadsByBarber retorna o cliente_id no objeto raw que é mapeado para lead.id se for o agendamento_id.
+    // No fetchLeadsByBarber, row.id é o agendamento.id.
+    // Mas o ClienteDetailsSheet precisa do CLIENTE_ID.
+    // Vou olhar o mapToLead de novo.
+  };
 
   const selectedLeads = selectedDay
     ? leadsByDay.get(format(selectedDay, "yyyy-MM-dd")) ?? []
@@ -400,8 +412,18 @@ function AgendaPage() {
             {selectedLeads.map((l) => (
               <div
                 key={l.identificador_usuario}
+                onClick={() => {
+                  if (l.cliente_id && l.nome) {
+                    setSelectedCliente({
+                      id: l.cliente_id,
+                      nome: l.nome,
+                      whatsapp: l.whatsapp || ""
+                    });
+                    setIsSheetOpen(true);
+                  }
+                }}
                 className={[
-                  "rounded-lg border border-border/60 bg-background/40 p-3 hover:border-primary/40 transition-colors",
+                  "rounded-lg border border-border/60 bg-background/40 p-3 hover:border-primary/40 transition-colors cursor-pointer",
                   l.status === "cancelado" ? "opacity-50 grayscale" : ""
                 ].join(" ")}
               >
@@ -439,6 +461,13 @@ function AgendaPage() {
           </div>
         </div>
       </section>
+
+      <ClienteDetailsSheet 
+        open={isSheetOpen} 
+        onOpenChange={setIsSheetOpen}
+        cliente={selectedCliente}
+        onAgendamentoCancelado={refreshData}
+      />
     </div>
   );
 }

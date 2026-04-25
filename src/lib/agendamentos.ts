@@ -71,7 +71,7 @@ export async function fetchUltimoAgendamentoPorCliente(clienteId: string) {
       pagamentos ( valor_total )
     `)
     .eq("cliente_id", clienteId)
-    .order("criado_em", { ascending: false })
+    .order("data_hora_agendada", { ascending: false })
     .limit(1)
     .maybeSingle();
 
@@ -92,13 +92,13 @@ export async function fetchUltimoAgendamentoPorCliente(clienteId: string) {
 
   return {
     id: row.id,
-    cliente_nome: row.clientes?.nome,
-    whatsapp: row.clientes?.whatsapp,
-    servico: servicosNomes,
-    valor: valorTotal,
+    cliente_nome: row.nome_cliente || row.clientes?.nome,
+    whatsapp: row.whatsapp || row.clientes?.whatsapp,
+    servico: row.servicos || servicosNomes,
+    valor: row.valor_servico || valorTotal,
     status: row.status,
     data_hora: row.data_hora_agendada,
-    barbeiro: row.profissionais?.nome,
+    barbeiro: row.barbeiro_nome || row.profissionais?.nome,
     resumo: row.resumo_conversa,
     inicio_atendimento: row.inicio_atendimento_em
   };
