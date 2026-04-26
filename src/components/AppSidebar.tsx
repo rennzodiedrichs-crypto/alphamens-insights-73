@@ -4,12 +4,12 @@ import logo from "@/assets/alpha-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchProfissionais } from "@/lib/equipe";
 import { useState, useEffect } from "react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
@@ -26,7 +26,7 @@ export function SidebarContent({ onItemClick, hideHeader = false }: SidebarConte
   const path = location.pathname;
   const { signOut, role, barberName } = useAuth();
   const navigate = useNavigate();
-  const [profissionais, setProfissionais] = useState<{id: string, nome: string}[]>([]);
+  const [profissionais, setProfissionais] = useState<{ id: string, nome: string }[]>([]);
 
   useEffect(() => {
     fetchProfissionais().then(setProfissionais);
@@ -56,7 +56,7 @@ export function SidebarContent({ onItemClick, hideHeader = false }: SidebarConte
       ].join(" ")}>
         {icon}
       </span>
-      <span className="font-medium tracking-wide truncate">{label}</span>
+      <span className="font-medium tracking-wide whitespace-nowrap">{label}</span>
       {active && (
         <div className="absolute left-0 w-1 h-5 bg-primary rounded-r-full shadow-glow" />
       )}
@@ -75,8 +75,8 @@ export function SidebarContent({ onItemClick, hideHeader = false }: SidebarConte
               <div className="absolute inset-0 rounded-full bg-primary/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
             <div className="min-w-0">
-              <div className="font-display text-lg leading-none text-foreground tracking-tight truncate">ALPHA MEN'S</div>
-              <div className="text-[9px] uppercase tracking-[0.2em] text-primary mt-1 font-semibold opacity-80 truncate">Premium Quality</div>
+              <div className="font-display text-lg leading-none text-foreground tracking-tight">ALPHA MEN'S</div>
+              <div className="text-[9px] uppercase tracking-[0.2em] text-primary mt-1 font-semibold opacity-80">Premium Quality</div>
             </div>
           </div>
         </div>
@@ -88,11 +88,11 @@ export function SidebarContent({ onItemClick, hideHeader = false }: SidebarConte
             <div className="px-3 pb-3 text-[10px] uppercase tracking-[0.4em] text-sidebar-foreground/30 font-bold">
               Geral
             </div>
-            {navItem("/", path === "/", <Home size={18} />, "Página Inicial")}
-            {navItem("/caixa", path === "/caixa", <Calculator size={18} />, "Caixa (POS)")}
-            {navItem("/clientes", path === "/clientes", <Users size={18} />, "Lista de Clientes")}
-            {navItem("/servicos", path === "/servicos", <Scissors size={18} />, "Catálogo de Serviços")}
-            {navItem("/equipe", path === "/equipe", <BarChart size={18} />, "Gestão de Equipe")}
+            {navItem("/", path === "/", <Home size={15} />, "Página Inicial")}
+            {navItem("/caixa", path === "/caixa", <Calculator size={15} />, "Caixa (POS)")}
+            {navItem("/clientes", path === "/clientes", <Users size={15} />, "Lista de Clientes")}
+            {navItem("/servicos", path === "/servicos", <Scissors size={15} />, "Catálogo de Serviços")}
+            {navItem("/equipe", path === "/equipe", <BarChart size={15} />, "Gestão de Equipe")}
           </>
         )}
 
@@ -115,8 +115,8 @@ export function SidebarContent({ onItemClick, hideHeader = false }: SidebarConte
                       : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
                   ].join(" ")}
                 >
-                  <Scissors size={16} className={active ? "text-primary" : "text-sidebar-foreground/50"} />
-                  <span className="font-medium tracking-wide truncate">{p.nome}</span>
+                  <Scissors size={14} className={active ? "text-primary" : "text-sidebar-foreground/50"} />
+                  <span className="font-medium tracking-wide whitespace-nowrap">{p.nome}</span>
                   {active && (
                     <div className="absolute left-0 w-1 h-5 bg-primary rounded-r-full shadow-glow" />
                   )}
@@ -146,8 +146,8 @@ export function SidebarContent({ onItemClick, hideHeader = false }: SidebarConte
                       </div>
                       <div className="space-y-3">
                         <h4 className="text-xs font-bold uppercase tracking-widest text-primary/70">Ações Rápidas</h4>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           className="w-full justify-start gap-3 border-sidebar-border hover:bg-sidebar-accent"
                           onClick={() => {
                             navigate({ to: `/agenda/${slugify(p.nome)}` });

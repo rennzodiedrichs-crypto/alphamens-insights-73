@@ -11,10 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calculator, CheckCircle2, Clock, DollarSign, User } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calculator, CheckCircle2, Clock, DollarSign, User, Calendar as CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatTimeBR } from "@/lib/format";
-import { format } from "date-fns";
+import { format, addDays, subDays } from "date-fns";
 
 export const Route = createFileRoute("/caixa")({
   component: CaixaPage,
@@ -24,18 +24,19 @@ function CaixaPage() {
   const { role } = useAuth();
   const [agendamentos, setAgendamentos] = useState<AgendamentoPOS[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dataSelecionada, setDataSelecionada] = useState(new Date());
   
   // Modal state
   const [openModal, setOpenModal] = useState(false);
   const [selectedAgendamento, setSelectedAgendamento] = useState<AgendamentoPOS | null>(null);
   const [metodoPagamento, setMetodoPagamento] = useState<string>("pix");
 
-  const today = format(new Date(), "yyyy-MM-dd");
+  const todayStr = format(dataSelecionada, "yyyy-MM-dd");
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const data = await fetchAgendamentosDoDia(today);
+      const data = await fetchAgendamentosDoDia(todayStr);
       setAgendamentos(data);
     } catch (err) {
       console.error(err);
@@ -49,12 +50,15 @@ function CaixaPage() {
     if (role === "admin") {
       loadData();
     }
-  }, [role]);
+  }, [role, dataSelecionada]);
+
+  const handlePrevDay = () => setDataSelecionada(prev => subDays(prev, 1));
+  const handleNextDay = () => setDataSelecionada(prev => addDays(prev, 1));
 
   if (role !== "admin") {
     return (
       <div className="flex h-screen items-center justify-center">
-        <h1 className="text-xl text-destructive font-bold">Acesso Restrito a Administradores</h1>
+        <h1 className="text-xl text-destructive font-bold">Acesso Restrito</h1>
       </div>
     );
   }
@@ -75,32 +79,45 @@ function CaixaPage() {
         selectedAgendamento.valor_total,
         metodoPagamento
       );
-      toast.success("Pagamento registrado com sucesso!");
+      toast.success("Pagamento registrado!");
       setOpenModal(false);
-      loadData(); // recarrega a lista
+      loadData();
     } catch (err) {
       console.error(err);
-      toast.error("Erro ao registrar pagamento");
+      toast.error("Erro no pagamento");
     }
   };
 
   const totalEmAberto = agendamentos
-    .filter(a => a.status === "pendente" || a.status === "em_andamento")
-    .reduce((acc, a) => acc + a.valor_total, 0);
+    .filter(a => {
+      const isPago = a.status === "concluido" || a.pagamento?.status === "pago";
+      return !isPago;
+    })
+    .reduce((acc, a) => acc + (a.valor_total || 0), 0);
 
   const totalRecebido = agendamentos
     .filter(a => a.status === "concluido" || a.pagamento?.status === "pago")
-    .reduce((acc, a) => acc + a.valor_total, 0);
+    .reduce((acc, a) => acc + (a.valor_total || 0), 0);
 
   return (
-    <div className="flex-1 space-y-8 p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-display font-bold tracking-tight flex items-center gap-2">
-          <Calculator className="h-8 w-8 text-primary" />
+    <div className="flex-1 space-y-4 p-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-display font-bold tracking-tight flex items-center gap-2">
+          <Calculator className="h-5 w-5 text-primary" />
           Caixa / POS
         </h2>
-        <div className="text-sm text-muted-foreground font-medium bg-sidebar-accent/30 px-3 py-1 rounded-full border border-sidebar-border">
-          {format(new Date(), "dd/MM/yyyy")}
+        
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={handlePrevDay}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <div className="flex items-center gap-2 bg-sidebar-accent/50 px-3 py-1 rounded-md border border-sidebar-border text-xs font-bold">
+            <CalendarIcon className="h-3 w-3 text-primary" />
+            {format(dataSelecionada, "dd/MM/yyyy")}
+          </div>
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleNextDay}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 

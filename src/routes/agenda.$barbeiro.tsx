@@ -150,6 +150,7 @@ function AgendaPage() {
       leads.filter(
         (l) =>
           l.data_hora_agendada &&
+          l.status?.toLowerCase().trim() !== "cancelado" &&
           isSameMonth(new Date(l.data_hora_agendada), monthRef)
       ),
     [leads, monthRef]

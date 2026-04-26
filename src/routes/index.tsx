@@ -21,7 +21,7 @@ import {
   Cell,
   Legend,
 } from "recharts";
-import { format, eachDayOfInterval } from "date-fns";
+import { format, eachDayOfInterval, parseISO, subDays, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 import { DateRangeFilter } from "@/components/DateRangeFilter";
@@ -71,26 +71,38 @@ function HomePage() {
   }, [range.from, range.to]);
 
   const stats = useMemo(() => {
-    const total = leads.length;
-    const agendados = leads.filter((l) => !!l.data_hora_agendada);
+    const validLeads = leads.filter(l => l.status?.toLowerCase().trim() !== "cancelado");
+    const total = validLeads.length;
+    const agendados = validLeads.filter((l) => !!l.data_hora_agendada);
     const valorTotal = agendados.reduce((s, l) => s + Number(l.valor_servico ?? 0), 0);
     const semAgenda = total - agendados.length;
     return { total, agendados: agendados.length, valorTotal, semAgenda };
   }, [leads]);
 
   const dailyData = useMemo(() => {
-    const days = eachDayOfInterval({ start: range.from, end: range.to });
+    // Mostrar dos últimos 7 dias até os próximos 7 dias para ver a agenda futura
+    const start = subDays(new Date(), 7);
+    const end = addDays(new Date(), 7);
+    const days = eachDayOfInterval({ start, end });
     const map = new Map(days.map((d) => [format(d, "yyyy-MM-dd"), 0]));
+    
     leads.forEach((l) => {
-      if (!l.inicio_atendimento_em) return;
-      const k = format(new Date(l.inicio_atendimento_em), "yyyy-MM-dd");
-      if (map.has(k)) map.set(k, (map.get(k) ?? 0) + 1);
+      if (l.status?.toLowerCase().trim() === "cancelado") return;
+
+      const rawDate = l.data_hora_agendada || l.inicio_atendimento_em || l.timestamp_ultima_msg;
+      if (!rawDate) return;
+
+      const datePart = rawDate.substring(0, 10); 
+      if (map.has(datePart)) {
+        map.set(datePart, (map.get(datePart) ?? 0) + 1);
+      }
     });
+    
     return Array.from(map.entries()).map(([k, v]) => ({
-      date: format(new Date(k), "dd/MM", { locale: ptBR }),
+      date: format(parseISO(k + "T12:00:00"), "dd/MM", { locale: ptBR }),
       leads: v,
     }));
-  }, [leads, range]);
+  }, [leads]);
 
   const horaData = useMemo(() => {
     let dentro = 0;
@@ -106,18 +118,18 @@ function HomePage() {
   }, [leads]);
 
   return (
-    <div className="legacy-font-section px-6 py-8 md:px-10 md:py-10 max-w-[1600px] mx-auto overflow-hidden">
-      <header className="mb-10 flex flex-wrap items-end justify-between gap-4 animate-reveal">
+    <div className="legacy-font-section px-4 py-6 md:px-8 md:py-8 max-w-[1600px] mx-auto overflow-hidden">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4 animate-reveal">
         <div>
-          <div className="text-[10px] uppercase tracking-[0.4em] text-primary mb-3 font-bold opacity-80">Dashboard Intuitivo</div>
-          <h1 className="font-display text-5xl md:text-6xl text-foreground tracking-tight leading-none">Visão Geral</h1>
-          <p className="text-muted-foreground mt-3 text-base max-w-lg leading-relaxed">
+          <div className="text-[10px] uppercase tracking-[0.4em] text-primary mb-1 font-bold opacity-80">Dashboard Intuitivo</div>
+          <h1 className="font-display text-3xl text-foreground tracking-tight leading-none">Visão Geral</h1>
+          <p className="text-muted-foreground mt-1 text-xs max-w-lg leading-relaxed">
             Gestão estratégica de clientes, atendimentos e agendamentos com métricas em tempo real.
           </p>
         </div>
       </header>
 
-      <div className="mb-10 rounded-xl border border-border/40 bg-card/20 p-4 backdrop-blur-sm animate-reveal [animation-delay:100ms]">
+      <div className="mb-6 rounded-xl border border-border/40 bg-card/20 p-2 backdrop-blur-sm animate-reveal [animation-delay:100ms]">
         <DateRangeFilter value={range} onChange={setRange} />
       </div>
 
@@ -127,7 +139,7 @@ function HomePage() {
         </div>
       )}
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-12">
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
         <div className="animate-reveal [animation-delay:150ms]">
           <StatCard label="Total de clientes" value={loading ? "…" : stats.total} icon={Users} accent="primary" />
         </div>
@@ -157,27 +169,27 @@ function HomePage() {
           </div>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={dailyData} margin={{ top: 20, right: 30, left: -10, bottom: 10 }}>
+              <LineChart data={dailyData} margin={{ top: 20, right: 30, left: -10, bottom: 10 }}>
                 <defs>
                   <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0.014 60 / 0.3)" vertical={false} />
-                <XAxis 
-                  dataKey="date" 
-                  stroke="oklch(0.7 0.015 70 / 0.5)" 
-                  fontSize={10} 
-                  tickLine={false} 
-                  axisLine={false} 
+                <XAxis
+                  dataKey="date"
+                  stroke="oklch(0.7 0.015 70 / 0.5)"
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={false}
                   dy={10}
                 />
-                <YAxis 
-                  stroke="oklch(0.7 0.015 70 / 0.5)" 
-                  fontSize={10} 
-                  tickLine={false} 
-                  axisLine={false} 
+                <YAxis
+                  stroke="oklch(0.7 0.015 70 / 0.5)"
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={false}
                   allowDecimals={false}
                   domain={[0, 'auto']}
                 />
@@ -235,9 +247,9 @@ function HomePage() {
                   stroke="none"
                 >
                   {horaData.map((entry, index) => (
-                    <Cell 
-                      key={entry.name} 
-                      fill={entry.color} 
+                    <Cell
+                      key={entry.name}
+                      fill={entry.color}
                       className="hover:brightness-125 transition-all cursor-pointer focus:outline-none"
                     />
                   ))}

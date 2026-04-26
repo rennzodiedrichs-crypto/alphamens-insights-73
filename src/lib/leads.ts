@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { format, startOfDay, endOfDay } from "date-fns";
 
 export type Lead = {
   id: string;
@@ -63,8 +63,8 @@ function mapToLead(row: any): Lead {
 }
 
 export async function fetchLeadsInRange(from: Date, to: Date): Promise<Lead[]> {
-  const fromStr = format(from, "yyyy-MM-dd'T'HH:mm:ss");
-  const toStr = format(to, "yyyy-MM-dd'T'HH:mm:ss");
+  const fromStr = format(startOfDay(from), "yyyy-MM-dd'T'HH:mm:ss");
+  const toStr = format(endOfDay(to), "yyyy-MM-dd'T'HH:mm:ss");
 
   // Consulta nas novas tabelas usando Junções (Joins) do PostgREST
   const { data, error } = await supabase
@@ -76,8 +76,8 @@ export async function fetchLeadsInRange(from: Date, to: Date): Promise<Lead[]> {
       agendamentos_servicos ( preco_cobrado, servicos ( nome ) ),
       pagamentos ( valor_total )
     `)
-    .or(`inicio_atendimento_em.gte.${fromStr},criado_em.gte.${fromStr}`)
-    .order("inicio_atendimento_em", { ascending: false, nullsFirst: false })
+    .or(`data_hora_agendada.gte.${fromStr},inicio_atendimento_em.gte.${fromStr},criado_em.gte.${fromStr}`)
+    .order("data_hora_agendada", { ascending: false, nullsFirst: false })
     .limit(1000);
 
   if (error) {
@@ -91,11 +91,13 @@ export async function fetchLeadsInRange(from: Date, to: Date): Promise<Lead[]> {
   const filteredData = mappedData.filter(lead => {
     const start = lead.inicio_atendimento_em;
     const lastMsg = lead.timestamp_ultima_msg;
+    const agenda = lead.data_hora_agendada;
     
     const isStartInRange = start && start >= fromStr && start <= toStr;
     const isLastMsgInRange = lastMsg && lastMsg >= fromStr && lastMsg <= toStr;
+    const isAgendaInRange = agenda && agenda >= fromStr && agenda <= toStr;
     
-    return isStartInRange || isLastMsgInRange;
+    return isStartInRange || isLastMsgInRange || isAgendaInRange;
   });
 
   return filteredData;

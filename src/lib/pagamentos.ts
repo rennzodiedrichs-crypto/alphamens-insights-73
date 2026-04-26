@@ -21,12 +21,15 @@ export async function fetchAgendamentosDoDia(data: string): Promise<AgendamentoP
       id,
       data_hora_agendada,
       status,
+      valor_servico,
+      servicos,
       clientes ( id, nome, whatsapp ),
       profissionais ( id, nome ),
       agendamentos_servicos ( preco_cobrado, servicos ( nome ) )
     `)
     .gte("data_hora_agendada", inicioDia)
     .lte("data_hora_agendada", fimDia)
+    .neq("status", "cancelado")
     .order("data_hora_agendada", { ascending: true });
 
   if (error) throw error;
@@ -41,12 +44,15 @@ export async function fetchAgendamentosDoDia(data: string): Promise<AgendamentoP
       .eq("agendamento_id", ag.id)
       .maybeSingle();
 
-    const servicos = (ag.agendamentos_servicos || []).map((as_: any) => ({
-      nome: as_.servicos?.nome || "Serviço",
-      preco_cobrado: Number(as_.preco_cobrado),
-    }));
+    // Priorizar os dados flat da tabela de agendamentos conforme pedido
+    const servicosFormatados = ag.servicos 
+      ? [{ nome: String(ag.servicos), preco_cobrado: Number(ag.valor_servico || 0) }]
+      : (ag.agendamentos_servicos || []).map((as_: any) => ({
+          nome: as_.servicos?.nome || "Serviço",
+          preco_cobrado: Number(as_.preco_cobrado),
+        }));
 
-    const valorTotal = servicos.reduce((acc, s) => acc + s.preco_cobrado, 0);
+    const valorTotal = Number(ag.valor_servico) || servicosFormatados.reduce((acc: number, s: any) => acc + s.preco_cobrado, 0);
 
     results.push({
       id: ag.id,
@@ -54,7 +60,7 @@ export async function fetchAgendamentosDoDia(data: string): Promise<AgendamentoP
       status: ag.status,
       cliente: ag.clientes as any,
       profissional: ag.profissionais as any,
-      servicos,
+      servicos: servicosFormatados,
       valor_total: valorTotal,
       pagamento: pagamento || null,
     });

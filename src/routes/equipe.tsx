@@ -90,9 +90,9 @@ function EquipeAdminPage() {
   const totalClientes = performance.reduce((acc, curr) => acc + Number(curr.qtd_clientes_atendidos), 0);
 
   return (
-    <div className="flex-1 space-y-8 p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-display font-bold tracking-tight">Gestão de Equipe</h2>
+    <div className="flex-1 space-y-4 p-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-display font-bold tracking-tight">Gestão de Equipe</h2>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -162,13 +162,13 @@ function EquipeAdminPage() {
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {profissionais.map((p) => (
-                <div key={p.id} className="relative group p-4 rounded-xl border border-sidebar-border bg-sidebar-accent/10 hover:border-primary/40 transition-all flex flex-col items-center text-center gap-3">
-                  <Avatar className="h-12 w-12 ring-2 ring-primary/20">
-                    <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                <div key={p.id} className="relative group p-2 rounded-xl border border-sidebar-border bg-sidebar-accent/10 hover:border-primary/40 transition-all flex flex-col items-center text-center gap-2">
+                  <Avatar className="h-10 w-10 ring-1 ring-primary/20">
+                    <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
                       {p.nome.substring(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="font-medium text-sm truncate w-full">{p.nome}</div>
+                  <div className="font-medium text-[11px] truncate w-full">{p.nome}</div>
                   <Button 
                     variant="ghost" 
                     size="icon" 
