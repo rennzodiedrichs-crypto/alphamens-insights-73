@@ -32,6 +32,7 @@ import { StatCard } from "@/components/StatCard";
 import { formatBRL, formatTimeBR } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { barberSlug } from "@/components/AppSidebar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -465,8 +466,11 @@ function AgendaPage() {
 
       <ClienteDetailsSheet 
         open={isSheetOpen} 
-        onOpenChange={setIsSheetOpen}
-        cliente={selectedCliente}
+        onOpenChange={setIsSheetOpen} 
+        cliente={selectedCliente ? {
+          ...selectedCliente,
+          whatsapp: selectedCliente.whatsapp || ""
+        } : null}
         onAgendamentoCancelado={refreshData}
       />
     </div>
