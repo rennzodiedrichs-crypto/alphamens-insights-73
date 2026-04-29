@@ -26,7 +26,7 @@ interface ClienteDetailsSheetProps {
   cliente: {
     id: string;
     nome: string;
-    whatsapp: string;
+    whatsapp: string | null;
   } | null;
   onAgendamentoCancelado?: () => void;
 }

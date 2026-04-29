@@ -61,7 +61,10 @@ export async function cancelarAgendamento(agendamentoId: string) {
 }
 
 export async function fetchUltimoAgendamentoPorCliente(clienteId: string) {
-  const { data, error } = await supabase
+  const agora = new Date().toISOString();
+
+  // 1. Tentar buscar o próximo agendamento ativo (futuro e não cancelado)
+  const { data: upcomingData, error: upcomingError } = await supabase
     .from("agendamentos")
     .select(`
       *,
@@ -71,19 +74,45 @@ export async function fetchUltimoAgendamentoPorCliente(clienteId: string) {
       pagamentos ( valor_total )
     `)
     .eq("cliente_id", clienteId)
-    .order("data_hora_agendada", { ascending: false })
+    .neq("status", "cancelado")
+    .gte("data_hora_agendada", agora)
+    .order("data_hora_agendada", { ascending: true })
     .limit(1)
     .maybeSingle();
 
-  if (error) {
-    console.error("Erro ao buscar último agendamento:", error);
-    throw error;
+  if (upcomingError) {
+    console.error("Erro ao buscar próximo agendamento:", upcomingError);
+    throw upcomingError;
   }
 
-  if (!data) return null;
+  let row = upcomingData;
+
+  // 2. Se não houver agendamento futuro ativo, buscar o mais recente criado (fallback)
+  if (!row) {
+    const { data: pastData, error: pastError } = await supabase
+      .from("agendamentos")
+      .select(`
+        *,
+        clientes ( whatsapp, nome ),
+        profissionais ( nome ),
+        agendamentos_servicos ( preco_cobrado, servicos ( nome ) ),
+        pagamentos ( valor_total )
+      `)
+      .eq("cliente_id", clienteId)
+      .order("criado_em", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (pastError) {
+      console.error("Erro ao buscar agendamento passado:", pastError);
+      throw pastError;
+    }
+
+    if (!pastData) return null;
+    row = pastData;
+  }
 
   // Adaptador simples para o formato que a UI precisa
-  const row = data;
   const relacaoServicos = row.agendamentos_servicos || [];
   const servicosNomes = relacaoServicos.map((s: any) => s.servicos?.nome).filter(Boolean).join(', ') || null;
   const valorTotal = row.pagamentos?.[0]?.valor_total 
