@@ -22,6 +22,7 @@ export type Lead = {
   id_lead_chatwoot: string | null;
   inbox_id_chatwoot: string | null;
   cliente_id: string | null;
+  profissional_id: string | null;
 };
 
 // Função adaptadora: Converte o retorno relacional do Supabase para o formato plano (Lead) que a UI espera
@@ -41,24 +42,25 @@ function mapToLead(row: any): Lead {
   return {
     id: row.id,
     identificador_usuario: cliente.identificador_usuario || row.whatsapp || '',
-    inicio_atendimento_em: row.inicio_atendimento_em,
+    inicio_atendimento_em: row.inicio_atendimento_em ? row.inicio_atendimento_em.replace(' ', 'T').replace(/([-+]\d{2})$/, '$1:00') : null,
     inicio_fora_horario_comercial: row.inicio_fora_horario_comercial,
     nome: row.nome_cliente || cliente.nome || null,
     whatsapp: row.whatsapp || cliente.whatsapp || null,
     status: row.status,
     servicos: row.servicos || servicosNomes,
     valor_servico: row.valor_servico || valorTotal,
-    data_hora_agendada: row.data_hora_agendada,
+    data_hora_agendada: row.data_hora_agendada ? row.data_hora_agendada.replace(' ', 'T').replace(/([-+]\d{2})$/, '$1:00') : null,
     barbeiro: row.barbeiro_nome || profissional.nome || null,
     id_agendamento: row.id,
     marcou_no_grupo: row.marcou_no_grupo,
-    timestamp_ultima_msg: row.timestamp_ultima_msg || row.atualizado_em || row.criado_em,
+    timestamp_ultima_msg: (row.timestamp_ultima_msg || row.atualizado_em || row.criado_em)?.replace(' ', 'T').replace(/([-+]\d{2})$/, '$1:00'),
     resumo_conversa: row.resumo_conversa,
     id_conta_chatwoot: row.id_conta_chatwoot,
     id_conversa_chatwoot: row.id_conversa_chatwoot,
     id_lead_chatwoot: cliente.id_lead_chatwoot || null,
     inbox_id_chatwoot: row.inbox_id_chatwoot,
     cliente_id: row.cliente_id,
+    profissional_id: row.profissional_id,
   };
 }
 
@@ -120,7 +122,9 @@ export async function fetchLeadsByBarber(barbeiro: string): Promise<Lead[]> {
 
   if (error) throw error;
   
-  // Realiza a filtragem pelo nome do barbeiro no cliente (compatível tanto com a tabela relacional quanto a plana)
   const allLeads = (data ?? []).map(mapToLead);
-  return allLeads.filter(l => l.barbeiro === barbeiro);
+  
+  return allLeads.filter(l => 
+    l.barbeiro?.trim().toLowerCase() === barbeiro?.trim().toLowerCase()
+  );
 }

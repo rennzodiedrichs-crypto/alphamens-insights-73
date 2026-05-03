@@ -255,10 +255,11 @@ function HomePage() {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: number) => {
+                  formatter={(value: any) => {
+                    const numValue = Number(value);
                     const total = horaData.reduce((acc, curr) => acc + curr.value, 0);
-                    const percent = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                    return [`${value} leads (${percent}%)`, ""];
+                    const percent = total > 0 ? ((numValue / total) * 100).toFixed(1) : 0;
+                    return [`${numValue} leads (${percent}%)`, ""];
                   }}
                   contentStyle={{
                     background: "oklch(0.18 0.012 60 / 0.95)",

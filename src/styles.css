@@ -1,4 +1,4 @@
-@import "tailwindcss" source(none);
+@import "tailwindcss";
 @source "../src";
 @import "tw-animate-css";
 
@@ -220,7 +220,7 @@
   }
 
   /* Labels pequenas e informais */
-  .text-[10px].uppercase,
+  .\text-\[10px\].uppercase,
   .text-xs.uppercase {
     letter-spacing: 0.2em !important;
     font-weight: 600 !important;
