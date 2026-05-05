@@ -60,6 +60,50 @@ export async function cancelarAgendamento(agendamentoId: string) {
   }
 }
 
+function mapAgendamentoRow(row: any) {
+  if (!row) return null;
+  
+  const relacaoServicos = row.agendamentos_servicos || [];
+  const servicosNomes = relacaoServicos.map((s: any) => s.servicos?.nome).filter(Boolean).join(', ') || null;
+  const valorTotal = row.pagamentos?.[0]?.valor_total 
+    ?? relacaoServicos.reduce((acc: number, curr: any) => acc + (curr.preco_cobrado || 0), 0) 
+    ?? 0;
+
+  return {
+    id: row.id,
+    cliente_nome: row.nome_cliente || row.clientes?.nome,
+    whatsapp: row.whatsapp || row.clientes?.whatsapp,
+    servico: row.servicos || servicosNomes,
+    valor: row.valor_servico || valorTotal,
+    status: row.status,
+    data_hora: row.data_hora_agendada,
+    barbeiro: row.barbeiro_nome || row.profissionais?.nome,
+    resumo: row.resumo_conversa,
+    inicio_atendimento: row.inicio_atendimento_em
+  };
+}
+
+export async function fetchAgendamentoPorId(id: string) {
+  const { data, error } = await supabase
+    .from("agendamentos")
+    .select(`
+      *,
+      clientes ( whatsapp, nome ),
+      profissionais ( nome ),
+      agendamentos_servicos ( preco_cobrado, servicos ( nome ) ),
+      pagamentos ( valor_total )
+    `)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Erro ao buscar agendamento por ID:", error);
+    throw error;
+  }
+
+  return mapAgendamentoRow(data);
+}
+
 export async function fetchUltimoAgendamentoPorCliente(clienteId: string) {
   const agora = new Date().toISOString();
 
@@ -74,7 +118,7 @@ export async function fetchUltimoAgendamentoPorCliente(clienteId: string) {
       pagamentos ( valor_total )
     `)
     .eq("cliente_id", clienteId)
-    .neq("status", "cancelado")
+    .not("status", "ilike", "cancelado")
     .gte("data_hora_agendada", agora)
     .order("data_hora_agendada", { ascending: true })
     .limit(1)
@@ -112,23 +156,5 @@ export async function fetchUltimoAgendamentoPorCliente(clienteId: string) {
     row = pastData;
   }
 
-  // Adaptador simples para o formato que a UI precisa
-  const relacaoServicos = row.agendamentos_servicos || [];
-  const servicosNomes = relacaoServicos.map((s: any) => s.servicos?.nome).filter(Boolean).join(', ') || null;
-  const valorTotal = row.pagamentos?.[0]?.valor_total 
-    ?? relacaoServicos.reduce((acc: number, curr: any) => acc + (curr.preco_cobrado || 0), 0) 
-    ?? 0;
-
-  return {
-    id: row.id,
-    cliente_nome: row.nome_cliente || row.clientes?.nome,
-    whatsapp: row.whatsapp || row.clientes?.whatsapp,
-    servico: row.servicos || servicosNomes,
-    valor: row.valor_servico || valorTotal,
-    status: row.status,
-    data_hora: row.data_hora_agendada,
-    barbeiro: row.barbeiro_nome || row.profissionais?.nome,
-    resumo: row.resumo_conversa,
-    inicio_atendimento: row.inicio_atendimento_em
-  };
+  return mapAgendamentoRow(row);
 }

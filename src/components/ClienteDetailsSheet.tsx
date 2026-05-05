@@ -17,7 +17,7 @@ import {
   SheetContent, 
 } from "@/components/ui/sheet";
 import { formatPhone, formatBRL } from "@/lib/format";
-import { cancelarAgendamento, fetchUltimoAgendamentoPorCliente } from "@/lib/agendamentos";
+import { cancelarAgendamento, fetchUltimoAgendamentoPorCliente, fetchAgendamentoPorId } from "@/lib/agendamentos";
 import { toast } from "sonner";
 
 interface ClienteDetailsSheetProps {
@@ -28,6 +28,7 @@ interface ClienteDetailsSheetProps {
     nome: string;
     whatsapp: string | null;
   } | null;
+  agendamentoId?: string;
   onAgendamentoCancelado?: () => void;
 }
 
@@ -35,6 +36,7 @@ export function ClienteDetailsSheet({
   open, 
   onOpenChange, 
   cliente,
+  agendamentoId,
   onAgendamentoCancelado 
 }: ClienteDetailsSheetProps) {
   const [agendamentoDetalhes, setAgendamentoDetalhes] = useState<any>(null);
@@ -44,7 +46,9 @@ export function ClienteDetailsSheet({
     if (!cliente) return;
     setLoading(true);
     try {
-      const data = await fetchUltimoAgendamentoPorCliente(cliente.id);
+      const data = agendamentoId 
+        ? await fetchAgendamentoPorId(agendamentoId)
+        : await fetchUltimoAgendamentoPorCliente(cliente.id);
       setAgendamentoDetalhes(data);
     } catch (error) {
       console.error("Erro ao carregar detalhes:", error);
@@ -119,7 +123,7 @@ export function ClienteDetailsSheet({
                         <span className="text-muted-foreground">Status</span>
                         <span className={[
                           "font-semibold capitalize",
-                          agendamentoDetalhes.status === "cancelado" ? "text-destructive" :
+                          agendamentoDetalhes.status?.toLowerCase().trim() === "cancelado" ? "text-destructive" :
                           agendamentoDetalhes.status === "concluido" ? "text-success" : "text-foreground"
                         ].join(" ")}>
                           {agendamentoDetalhes.status === "pendente" ? "Agendado" : agendamentoDetalhes.status}

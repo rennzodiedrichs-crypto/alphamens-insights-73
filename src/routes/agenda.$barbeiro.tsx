@@ -76,6 +76,7 @@ function AgendaPage() {
    const [profissionalId, setProfissionalId] = useState<string>("");
   const [isManualOpen, setIsManualOpen] = useState(false);
   const [selectedCliente, setSelectedCliente] = useState<{id: string, nome: string, whatsapp: string} | null>(null);
+  const [selectedAgendamentoId, setSelectedAgendamentoId] = useState<string | undefined>(undefined);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   useEffect(() => {
@@ -151,19 +152,31 @@ function AgendaPage() {
       leads.filter(
         (l) =>
           l.data_hora_agendada &&
-          l.status?.toLowerCase().trim() !== "cancelado" &&
           isSameMonth(new Date(l.data_hora_agendada), monthRef)
       ),
     [leads, monthRef]
   );
 
-  const totalMes = monthLeads.length;
-  const valorMes = monthLeads.reduce((s, l) => s + Number(l.valor_servico ?? 0), 0);
+  const totalMes = useMemo(() => 
+    monthLeads.filter(l => l.status?.toLowerCase().trim() !== 'cancelado').length,
+    [monthLeads]
+  );
+  
+  const valorMes = useMemo(() => 
+    monthLeads
+      .filter(l => l.status?.toLowerCase().trim() !== 'cancelado')
+      .reduce((s, l) => s + Number(l.valor_servico ?? 0), 0),
+    [monthLeads]
+  );
 
   const proximo = useMemo(() => {
     const now = new Date();
     return [...leads]
-      .filter((l) => l.data_hora_agendada && isAfter(new Date(l.data_hora_agendada), now))
+      .filter((l) => 
+        l.data_hora_agendada && 
+        l.status?.toLowerCase().trim() !== "cancelado" &&
+        isAfter(new Date(l.data_hora_agendada), now)
+      )
       .sort(
         (a, b) =>
           new Date(a.data_hora_agendada!).getTime() -
@@ -365,7 +378,7 @@ function AgendaPage() {
                     inMonth ? "bg-background/40" : "bg-background/10 opacity-40",
                     isSelected
                       ? "border-primary bg-primary/15 shadow-glow"
-                      : items.length > 0
+                      : items.some(l => l.status?.toLowerCase().trim() !== "cancelado")
                       ? "border-primary/40 hover:border-primary"
                       : "border-border/40 hover:border-border",
                     isToday && !isSelected ? "ring-1 ring-primary/40" : "",
@@ -381,10 +394,16 @@ function AgendaPage() {
                   </span>
                   {items.length > 0 && (
                     <div className="mt-auto flex items-center justify-between">
-                      <span className="text-[10px] text-primary font-semibold">
-                        {items.length} {items.length === 1 ? "agend." : "agend."}
+                      <span className={[
+                        "text-[10px] font-semibold",
+                        items.some(l => l.status?.toLowerCase().trim() !== "cancelado") ? "text-primary" : "text-muted-foreground/50"
+                      ].join(" ")}>
+                        {items.filter(l => l.status?.toLowerCase().trim() !== "cancelado").length} agend.
                       </span>
-                      <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                      <div className={[
+                        "h-1.5 w-1.5 rounded-full",
+                        items.some(l => l.status?.toLowerCase().trim() !== "cancelado") ? "bg-primary" : "bg-muted-foreground/30"
+                      ].join(" ")} />
                     </div>
                   )}
                 </button>
@@ -421,23 +440,35 @@ function AgendaPage() {
                       nome: l.nome,
                       whatsapp: l.whatsapp || ""
                     });
+                    setSelectedAgendamentoId(l.id_agendamento || undefined);
                     setIsSheetOpen(true);
                   }
                 }}
                 className={[
                   "rounded-lg border border-border/60 bg-background/40 p-3 hover:border-primary/40 transition-colors cursor-pointer",
-                  l.status === "cancelado" ? "opacity-50 grayscale" : ""
+                  l.status?.toLowerCase().trim() === "cancelado" ? "opacity-30 grayscale" : ""
                 ].join(" ")}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <div className="font-semibold text-foreground truncate">
+                  <div className={[
+                    "font-semibold truncate",
+                    l.status?.toLowerCase().trim() === "cancelado" ? "text-muted-foreground line-through" : "text-foreground"
+                  ].join(" ")}>
                     {l.nome ?? "Sem nome"}
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="text-primary font-display text-lg tabular-nums">
+                    {l.status?.toLowerCase().trim() === "cancelado" && (
+                      <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-destructive/10 text-destructive border border-destructive/20 uppercase tracking-wider">
+                        Cancelado
+                      </span>
+                    )}
+                    <div className={[
+                      "font-display text-lg tabular-nums",
+                      l.status?.toLowerCase().trim() === "cancelado" ? "text-muted-foreground/50 line-through" : "text-primary"
+                    ].join(" ")}>
                       {formatTimeBR(l.data_hora_agendada)}
                     </div>
-                    {l.id_agendamento && l.status !== "cancelado" && (
+                    {l.id_agendamento && l.status?.toLowerCase().trim() !== "cancelado" && (
                       <Button
                         variant="ghost"
                         size="icon"
@@ -471,6 +502,7 @@ function AgendaPage() {
           ...selectedCliente,
           whatsapp: selectedCliente.whatsapp || ""
         } : null}
+        agendamentoId={selectedAgendamentoId}
         onAgendamentoCancelado={refreshData}
       />
     </div>
